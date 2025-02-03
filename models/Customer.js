@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const User = mongoose.model("User", {
+const Customer = mongoose.model("Customer", {
   email: String,
   name: String,
   firstName: String,
@@ -8,13 +8,20 @@ const User = mongoose.model("User", {
   zip: Number,
   city: String,
   phone: Number,
+  birthday: Date,
+  occupation: String,
   activity: String,
-  siret: Number,
-  certification: String,
-  customers: [
+  weight: Number,
+  size: Number,
+  workingTime: Number,
+  availibility: Number,
+  sportBackground: String,
+  healthProblem: String,
+  goals: String,
+  coachs: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
+      ref: "User",
     },
   ],
   sessions: [
@@ -35,15 +42,6 @@ const User = mongoose.model("User", {
       ref: "Bill",
     },
   ],
-  subscription: {
-    category: String,
-    bills: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Bill",
-      },
-    ],
-  },
   //planning infos
   avatar: Object,
   token: String,

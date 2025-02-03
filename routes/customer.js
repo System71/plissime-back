@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User");
+const Customer = require("../models/Customer");
 const fileUpload = require("express-fileupload");
 
 const SHA256 = require("crypto-js/sha256");
@@ -9,7 +9,7 @@ const uid2 = require("uid2");
 // const convertToBase64 = require("../utils/converToBase64");
 
 // ========== SIGNUP ==========
-router.post("/user/signup", fileUpload(), async (req, res) => {
+router.post("/customer/signup", fileUpload(), async (req, res) => {
   try {
     const password = req.body.password;
     const salt = uid2(16);
@@ -24,10 +24,16 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
       zip,
       city,
       phone,
+      birthday,
+      occupation,
       activity,
-      siret,
-      certification,
-      subscription,
+      weight,
+      size,
+      workingTime,
+      availibility,
+      sportBackground,
+      healthProblem,
+      goals,
     } = req.body;
 
     //Verification if email is provided
@@ -37,13 +43,13 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
 
     //Verification if email doesn't exist
 
-    const checkMail = await User.findOne({ email: email });
+    const checkMail = await Customer.findOne({ email: email });
 
     if (checkMail) {
       return res.status(400).json({ message: "Email already used" });
     }
 
-    const newUser = new User({
+    const newCustomer = new Customer({
       email: email,
       name: name,
       firstName: firstName,
@@ -51,11 +57,17 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
       zip: zip,
       city: city,
       phone: phone,
+      birthday: birthday,
+      occupation: occupation,
       activity: activity,
-      siret: siret,
-      certification: certification,
+      weight: weight,
+      size: size,
+      workingTime: workingTime,
+      availibility: availibility,
+      sportBackground: sportBackground,
+      healthProblem: healthProblem,
+      goals: goals,
       //planning infos
-      subscription: subscription,
       token: token,
       hash: hash,
       salt: salt,
@@ -77,13 +89,13 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     //   newUser.account.avatar = avatar;
     // }
 
-    await newUser.save();
+    await newCustomer.save();
 
     res.status(200).json({
-      _id: newUser.id,
-      token: newUser.token,
+      _id: newCustomer.id,
+      token: newCustomer.token,
       account: {
-        email: newUser.email,
+        email: newCustomer.email,
         // Voir pour confirmé l'avatar
       },
     });
@@ -93,28 +105,28 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
 });
 
 // ========== SIGNUP ==========
-router.post("/user/login", async (req, res) => {
+router.post("/customer/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const userToSearch = await User.findOne({ email: email });
+    const customerToSearch = await Customer.findOne({ email: email });
 
-    if (!userToSearch) {
+    if (!customerToSearch) {
       return res.status(401).json({ message: "Email or password invalid" });
     }
 
-    const salt = userToSearch.salt;
+    const salt = customerToSearch.salt;
     const hash = SHA256(password + salt).toString(encBase64);
-    const userHash = userToSearch.hash;
+    const customerHash = customerToSearch.hash;
 
-    if (hash !== userHash) {
+    if (hash !== customerHash) {
       return res.status(401).json({ message: "Email or password invalid" });
     }
 
     res.status(200).json({
-      _id: userToSearch.id,
-      token: userToSearch.token,
-      email: userToSearch.email,
+      _id: customerToSearch.id,
+      token: customerToSearch.token,
+      email: customerToSearch.email,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
