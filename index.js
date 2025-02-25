@@ -4,12 +4,14 @@ const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/user");
+const customerRoutes = require("./routes/customer");
 
 mongoose.connect(process.env.MONGODB_URI);
 
 app.use(express.json());
 app.use(cors());
 app.use(userRoutes);
+app.use(customerRoutes);
 
 app.get("/", (req, res) => {
   res.status(400).send("coucou");

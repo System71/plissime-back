@@ -92,7 +92,7 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
   }
 });
 
-// ========== SIGNUP ==========
+// ========== LOGIN ==========
 router.post("/user/login", async (req, res) => {
   try {
     const { email, password } = req.body;
