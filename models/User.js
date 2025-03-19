@@ -45,6 +45,12 @@ const User = mongoose.model("User", {
     ],
   },
   //planning infos
+  oauth: {
+    googleId: String,
+    accessToken: String,
+    refreshToken: String,
+    expiryDate: Number,
+  },
   avatar: Object,
   token: String,
   hash: String,

@@ -49,4 +49,4 @@ const Customer = mongoose.model("Customer", {
   salt: String,
 });
 
-module.exports = User;
+module.exports = Customer;
