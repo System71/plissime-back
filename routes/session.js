@@ -6,7 +6,8 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // ========== CREATE ==========
 router.post("/session/add", isAuthenticated, async (req, res) => {
   try {
-    const { title, start, end, state, content, price, project } = req.body;
+    const { title, start, end, state, content, price, project, customer } =
+      req.body;
 
     const newSession = new Session({
       title: title,
@@ -16,7 +17,8 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       content: content,
       price: price,
       project: project,
-      coach: req.user,
+      coach: req.user.id,
+      customer: customer,
     });
 
     await newSession.save();
