@@ -102,6 +102,7 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
       name: name,
       phone: phone,
       token: token,
+      coachs: [req.user],
     });
 
     await newCustomer.save();
