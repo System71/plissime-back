@@ -39,6 +39,28 @@ router.get("/sessions", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DISPLAY DAY SESSIONS ==========
+router.get("/daysessions", isAuthenticated, async (req, res) => {
+  const now = new Date();
+  const todayStart = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+  );
+  console.log(todayStart);
+  const tomorrowStart = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+  );
+  try {
+    const daySessions = await Session.find({
+      coach: req.user,
+      start: { $gte: todayStart, $lt: tomorrowStart },
+    });
+
+    res.status(201).json(daySessions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== MODIFY SESSION ==========
 router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
   try {
