@@ -45,7 +45,6 @@ router.get("/daysessions", isAuthenticated, async (req, res) => {
   const todayStart = new Date(
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
   );
-  console.log(todayStart);
   const tomorrowStart = new Date(
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
   );
