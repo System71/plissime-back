@@ -5,6 +5,7 @@ const app = express();
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/user");
 const customerRoutes = require("./routes/customer");
+const sessionRoutes = require("./routes/session");
 const calendarRoutes = require("./routes/calendar");
 const cookieParser = require("cookie-parser");
 
@@ -16,6 +17,7 @@ app.use(cookieParser());
 app.use(userRoutes);
 app.use(customerRoutes);
 app.use(calendarRoutes);
+app.use(sessionRoutes);
 
 app.get("/", (req, res) => {
   res.status(400).send("coucou");

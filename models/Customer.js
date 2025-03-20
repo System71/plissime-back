@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const Customer = mongoose.model("Customer", {
+  isActive: { type: Boolean, default: false },
   email: String,
   name: String,
   firstName: String,
@@ -22,24 +23,6 @@ const Customer = mongoose.model("Customer", {
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-    },
-  ],
-  sessions: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Session",
-    },
-  ],
-  program: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Program",
-    },
-  ],
-  bills: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Bill",
     },
   ],
   //planning infos

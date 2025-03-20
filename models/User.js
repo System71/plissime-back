@@ -11,30 +11,6 @@ const User = mongoose.model("User", {
   activity: String,
   siret: Number,
   certification: String,
-  customers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
-    },
-  ],
-  sessions: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Session",
-    },
-  ],
-  program: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Program",
-    },
-  ],
-  bills: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Bill",
-    },
-  ],
   subscription: {
     category: String,
     bills: [

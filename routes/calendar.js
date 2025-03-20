@@ -20,7 +20,6 @@ router.get("/auth/google/callback", async (req, res) => {
 
     res.send("Authentification réussie !");
   } catch (error) {
-    console.error("Erreur lors de l'authentification :", error);
     res.status(500).send("Erreur d'authentification !");
   }
 

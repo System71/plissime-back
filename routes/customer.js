@@ -6,7 +6,118 @@ const fileUpload = require("express-fileupload");
 const SHA256 = require("crypto-js/sha256");
 const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
+const isAuthenticated = require("../middlewares/isAuthenticated");
 // const convertToBase64 = require("../utils/converToBase64");
+
+// ========== DISPLAY COACH CUSTOMERS ==========
+router.get("/mycustomers", isAuthenticated, async (req, res) => {
+  try {
+    const myCustomers = await Customer.find({ coach: req.user });
+  } catch (error) {
+    res.status(500).send("Erreur d'authentification !");
+  }
+});
+
+// ========== ACTIVATION ==========
+router.put("/customer/activation/:token", async (req, res) => {
+  try {
+    const password = req.body.password;
+    const salt = uid2(16);
+    const hash = SHA256(password + salt).toString(encBase64);
+
+    const {
+      email,
+      name,
+      firstName,
+      address,
+      zip,
+      city,
+      phone,
+      birthday,
+      occupation,
+      activity,
+      weight,
+      size,
+      workingTime,
+      availibility,
+      sportBackground,
+      healthProblem,
+      goals,
+    } = req.body;
+
+    const customerToFind = await Customer.findOneAndUpdate(
+      { token: req.params.token },
+      {
+        isActive: true,
+        email: email,
+        name: name,
+        firstName: firstName,
+        address: address,
+        zip: zip,
+        city: city,
+        phone: phone,
+        birthday: birthday,
+        occupation: occupation,
+        activity: activity,
+        weight: weight,
+        size: size,
+        workingTime: workingTime,
+        availibility: availibility,
+        sportBackground: sportBackground,
+        healthProblem: healthProblem,
+        goals: goals,
+      },
+      { new: true }
+    );
+    res.status(200).json({
+      message: "Compte activé avec succés!",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== PRESIGNUP ==========
+router.post("/customer/presignup", isAuthenticated, async (req, res) => {
+  try {
+    const token = uid2(16);
+
+    const { email, name, phone } = req.body;
+
+    //Verification if email is provided
+    if (!email) {
+      return res.status(400).json({ message: "Email is missing" });
+    }
+
+    //Verification if email doesn't exist
+
+    const checkMail = await Customer.findOne({ email: email });
+
+    if (checkMail) {
+      return res.status(400).json({ message: "Email already used" });
+    }
+
+    const newCustomer = new Customer({
+      email: email,
+      name: name,
+      phone: phone,
+      token: token,
+    });
+
+    await newCustomer.save();
+
+    res.status(200).json({
+      _id: newCustomer.id,
+      token: newCustomer.token,
+      account: {
+        email: newCustomer.email,
+        // Voir pour confirmé l'avatar
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // ========== SIGNUP ==========
 router.post("/customer/signup", fileUpload(), async (req, res) => {
@@ -50,6 +161,7 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
     }
 
     const newCustomer = new Customer({
+      isActive: true,
       email: email,
       name: name,
       firstName: firstName,
@@ -104,7 +216,7 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
   }
 });
 
-// ========== SIGNUP ==========
+// ========== LOGIN ==========
 router.post("/customer/login", async (req, res) => {
   try {
     const { email, password } = req.body;
