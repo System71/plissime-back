@@ -52,7 +52,9 @@ router.get("/daysessions", isAuthenticated, async (req, res) => {
     const daySessions = await Session.find({
       coach: req.user,
       start: { $gte: todayStart, $lt: tomorrowStart },
-    }).populate("coach");
+    })
+      .populate("coach")
+      .populate("customer");
 
     res.status(201).json(daySessions);
   } catch (error) {
