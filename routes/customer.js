@@ -90,7 +90,6 @@ router.put("/customer/activation/:token", async (req, res) => {
 router.post("/customer/presignup", isAuthenticated, async (req, res) => {
   try {
     const token = uid2(16);
-
     const { email, name, firstName, phone } = req.body;
 
     //Verification if email is provided
