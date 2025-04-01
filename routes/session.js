@@ -43,6 +43,18 @@ router.get("/sessions", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DISPLAY ONE SESSION ==========
+router.get("/session/:id", isAuthenticated, async (req, res) => {
+  try {
+    const sessionTofind = await Session.findById(req.params.id)
+      .populate("coach")
+      .populate("customer");
+    res.status(201).json(sessionTofind);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== DISPLAY DAY SESSIONS ==========
 router.get("/daysessions", isAuthenticated, async (req, res) => {
   const now = new Date();
