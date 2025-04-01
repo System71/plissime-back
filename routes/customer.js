@@ -12,7 +12,16 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // ========== DISPLAY COACH CUSTOMERS ==========
 router.get("/mycustomers", isAuthenticated, async (req, res) => {
   try {
-    const myCustomers = await Customer.find({ coach: req.user });
+    const { name } = req.query;
+    const filter = { coachs: { $in: [req.user] } };
+    console.log("user=", req.user);
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
+    }
+
+    const myCustomers = await Customer.find(filter);
+    console.log("reponse=", myCustomers);
+    res.status(201).json(myCustomers);
   } catch (error) {
     res.status(500).send("Erreur d'authentification !");
   }
@@ -82,7 +91,7 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
   try {
     const token = uid2(16);
 
-    const { email, name, phone } = req.body;
+    const { email, name, firstName, phone } = req.body;
 
     //Verification if email is provided
     if (!email) {
@@ -100,6 +109,7 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
     const newCustomer = new Customer({
       email: email,
       name: name,
+      firstName: firstName,
       phone: phone,
       token: token,
       coachs: [req.user],
@@ -146,6 +156,7 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
       sportBackground,
       healthProblem,
       goals,
+      coachs,
     } = req.body;
 
     //Verification if email is provided
@@ -180,6 +191,7 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
       sportBackground: sportBackground,
       healthProblem: healthProblem,
       goals: goals,
+      coachs: coachs,
       //planning infos
       token: token,
       hash: hash,
@@ -203,6 +215,8 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
     // }
 
     await newCustomer.save();
+
+    console.log(newCustomer);
 
     res.status(200).json({
       _id: newCustomer.id,

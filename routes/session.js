@@ -9,6 +9,8 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
     const { title, start, end, state, content, price, project, customer } =
       req.body;
 
+    console.log("req.body=", req.body);
+
     const newSession = new Session({
       title: title,
       start: start,
@@ -22,7 +24,7 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
     });
 
     await newSession.save();
-
+    console.log(newSession);
     res.status(201).json(newSession);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,7 +34,9 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
 // ========== DISPLAY SESSIONS ==========
 router.get("/sessions", isAuthenticated, async (req, res) => {
   try {
-    const sessions = await Session.find({ coach: req.user });
+    const sessions = await Session.find({ coach: req.user })
+      .populate("coach")
+      .populate("customer");
     res.status(201).json(sessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
