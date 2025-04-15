@@ -4,7 +4,10 @@ const Session = mongoose.model("Session", {
   title: String,
   start: Date,
   end: Date,
-  state: String,
+  state: {
+    type: String,
+    enum: ["Confirmée", "Annulée", "À payer", "Payée"],
+  },
   content: String,
   price: Number,
   project: String,
