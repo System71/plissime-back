@@ -81,10 +81,11 @@ router.get("/daysessions", isAuthenticated, async (req, res) => {
 // ========== MODIFY SESSION ==========
 router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
   try {
+    console.log("req.params=", req.params);
     const { title, start, end, state, content, price, project } = req.body;
 
     const sessionToModify = await Session.findByIdAndUpdate(
-      req.body.id,
+      req.params.id,
       {
         title: title,
         start: start,
@@ -96,7 +97,7 @@ router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
       },
       { new: true }
     );
-
+    console.log("session modifiée=", sessionToModify);
     res.status(201).json({ message: "Session modifiée!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
