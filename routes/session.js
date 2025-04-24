@@ -31,7 +31,7 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY SESSIONS ==========
+// ========== DISPLAY COACHS SESSIONS ==========
 router.get("/sessions", isAuthenticated, async (req, res) => {
   try {
     const sessions = await Session.find({ coach: req.user })

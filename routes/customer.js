@@ -28,6 +28,16 @@ router.get("/mycustomers", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DISPLAY ONE CUSTOMER ==========
+router.get("/customer/:id", isAuthenticated, async (req, res) => {
+  try {
+    const customerTofind = await Customer.findById(req.params.id);
+    res.status(201).json(customerTofind);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== ACTIVATION ==========
 router.put("/customer/activation/:token", async (req, res) => {
   try {
