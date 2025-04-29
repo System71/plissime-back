@@ -10,7 +10,6 @@ const Customer = mongoose.model("Customer", {
   city: String,
   phone: Number,
   birthday: Date,
-  occupation: String,
   activity: String,
   weight: Number,
   size: Number,

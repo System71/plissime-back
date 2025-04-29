@@ -56,7 +56,7 @@ router.get("/session/:id", isAuthenticated, async (req, res) => {
 });
 
 // ========== DISPLAY DAY SESSIONS ==========
-router.get("/daysessions", isAuthenticated, async (req, res) => {
+router.get("/sessions/daily", isAuthenticated, async (req, res) => {
   const now = new Date();
   const todayStart = new Date(
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
@@ -73,6 +73,23 @@ router.get("/daysessions", isAuthenticated, async (req, res) => {
       .populate("customer");
 
     res.status(201).json(daySessions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY UPCOMING SESSIONS ==========
+router.get("/sessions/upcoming", isAuthenticated, async (req, res) => {
+  const now = new Date();
+  try {
+    const upcomingSessions = await Session.find({
+      coach: req.user,
+      start: { $gt: now },
+    })
+      .populate("coach")
+      .populate("customer");
+
+    res.status(201).json(upcomingSessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
