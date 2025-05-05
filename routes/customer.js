@@ -20,7 +20,7 @@ router.get("/mycustomers", isAuthenticated, async (req, res) => {
       filter.name = { $regex: name, $options: "i" };
     }
 
-    const myCustomers = await Customer.find(filter);
+    const myCustomers = await Customer.find(filter).sort({ name: 1 });
     console.log("reponse=", myCustomers);
     res.status(201).json(myCustomers);
   } catch (error) {

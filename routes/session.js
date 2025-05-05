@@ -81,10 +81,13 @@ router.get("/sessions/daily", isAuthenticated, async (req, res) => {
 // ========== DISPLAY UPCOMING SESSIONS ==========
 router.get("/sessions/upcoming", isAuthenticated, async (req, res) => {
   const now = new Date();
+  const tomorrow = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+  );
   try {
     const upcomingSessions = await Session.find({
       coach: req.user,
-      start: { $gt: now },
+      start: { $gte: tomorrow },
     })
       .populate("coach")
       .populate("customer");
