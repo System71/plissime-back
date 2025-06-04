@@ -134,4 +134,26 @@ router.delete("/session/delete/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DISPLAY NEXT CUSTOMER SESSION ==========
+router.get("/sessions/next/:customerId", isAuthenticated, async (req, res) => {
+  const { customerId } = req.params;
+  try {
+    console.log("next!");
+    const now = new Date();
+
+    const nextSession = await Session.findOne({
+      customer: customerId,
+      coach: req.user,
+      start: { $gt: now },
+    }).sort({ start: 1 });
+
+    if (!nextSession) {
+      return res.status(404).json({ message: "Aucune session à venir" });
+    }
+    res.status(201).json(nextSession);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
