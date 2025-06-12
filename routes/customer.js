@@ -13,9 +13,7 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 router.get("/mycustomers", isAuthenticated, async (req, res) => {
   try {
     const { name } = req.query;
-    console.log("search=", name);
     const filter = { coachs: { $in: [req.user] } };
-    console.log("user=", req.user);
     if (name) {
       filter.name = { $regex: name, $options: "i" };
     }

@@ -34,10 +34,36 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
 // ========== DISPLAY COACHS SESSIONS ==========
 router.get("/sessions", isAuthenticated, async (req, res) => {
   try {
-    const sessions = await Session.find({ coach: req.user })
+    const { name } = req.query;
+    console.log("name=", name);
+    const filter = { coach: req.user._id };
+
+    let sessions = await Session.find(filter)
+      .sort({ start: 1 })
       .populate("coach")
       .populate("customer");
-    res.status(201).json(sessions);
+
+    if (name) {
+      const regex = new RegExp(name, "i");
+      sessions = sessions.filter((session) =>
+        session.customer?.name?.match(regex)
+      );
+    }
+
+    res.status(200).json(sessions);
+    // const filter = { coach: { $in: [req.user] } };
+    // console.log("coach=", req.user);
+    // if (name) {
+    //   filter.name = { $regex: name, $options: "i" };
+    // }
+    // console.log("filter=", filter);
+
+    // const sessions = await Session.find(filter)
+    //   .sort({ start: 1 })
+    //   .populate("coach")
+    //   .populate("customer");
+    // console.log("sessions:", sessions);
+    // res.status(201).json(sessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
