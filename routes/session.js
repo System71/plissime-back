@@ -36,7 +36,7 @@ router.get("/sessions", isAuthenticated, async (req, res) => {
   try {
     const { name } = req.query;
     console.log("name=", name);
-    const filter = { coach: req.user._id };
+    const filter = { coach: req.user._id, state: { $ne: "Payée" } };
 
     let sessions = await Session.find(filter)
       .sort({ start: 1 })
@@ -51,19 +51,31 @@ router.get("/sessions", isAuthenticated, async (req, res) => {
     }
 
     res.status(200).json(sessions);
-    // const filter = { coach: { $in: [req.user] } };
-    // console.log("coach=", req.user);
-    // if (name) {
-    //   filter.name = { $regex: name, $options: "i" };
-    // }
-    // console.log("filter=", filter);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-    // const sessions = await Session.find(filter)
-    //   .sort({ start: 1 })
-    //   .populate("coach")
-    //   .populate("customer");
-    // console.log("sessions:", sessions);
-    // res.status(201).json(sessions);
+// ========== DISPLAY COACHS SESSIONS PAID ==========
+router.get("/sessions/paid", isAuthenticated, async (req, res) => {
+  try {
+    const { name } = req.query;
+    console.log("name=", name);
+    const filter = { coach: req.user._id, state: "Payée" };
+
+    let sessions = await Session.find(filter)
+      .sort({ start: -1 })
+      .populate("coach")
+      .populate("customer");
+
+    if (name) {
+      const regex = new RegExp(name, "i");
+      sessions = sessions.filter((session) =>
+        session.customer?.name?.match(regex)
+      );
+    }
+
+    res.status(200).json(sessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
