@@ -2,11 +2,12 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const fileUpload = require("express-fileupload");
-
 const SHA256 = require("crypto-js/sha256");
 const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
 // const convertToBase64 = require("../utils/converToBase64");
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ajoute cette clé dans ton `.env`
 
 // ========== SIGNUP ==========
 router.post("/user/signup", fileUpload(), async (req, res) => {
@@ -77,6 +78,14 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     //   newUser.account.avatar = avatar;
     // }
 
+    const account = await stripe.accounts.create({
+      type: "express",
+      country: "FR",
+      email: email,
+    });
+
+    newUser.stripe_id = account.id;
+
     await newUser.save();
 
     res.status(200).json({
@@ -118,6 +127,34 @@ router.post("/user/login", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== ON BOARDING STRIPE ==========
+router.get("/user/stripe-onboarding/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user || !user.stripe_id) {
+      return res
+        .status(404)
+        .json({ message: "Utilisateur ou compte Stripe non trouvé" });
+    }
+
+    const accountLink = await stripe.accountLinks.create({
+      account: user.stripe_id,
+      // Voir pour faire les pages d'atterissage de Stripe
+      // refresh_url: `${process.env.FRONTEND_URL}/onboarding-failed`,
+      // return_url: `${process.env.FRONTEND_URL}/onboarding-success`,
+      refresh_url: `${process.env.FRONTEND_URL}`,
+      return_url: `${process.env.FRONTEND_URL}`,
+      type: "account_onboarding",
+    });
+
+    res.status(200).json({ url: accountLink.url });
+  } catch (error) {
+    console.error("Erreur d'onboarding Stripe:", error);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 

@@ -27,6 +27,10 @@ const User = mongoose.model("User", {
     refreshToken: String,
     expiryDate: Number,
   },
+  stripe_id: {
+    type: String,
+    default: null, // utile si tous les coachs ne sont pas encore inscrits à Stripe
+  },
   avatar: Object,
   token: String,
   hash: String,
