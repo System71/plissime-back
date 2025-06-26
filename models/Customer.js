@@ -29,6 +29,7 @@ const Customer = mongoose.model("Customer", {
   token: String,
   hash: String,
   salt: String,
+  //
 });
 
 module.exports = Customer;
