@@ -1,11 +1,5 @@
 require("dotenv").config();
 const cors = require("cors");
-app.use(
-  cors({
-    origin: "https://plissime.netlify.app", // ou "*" si en dev temporaire
-    credentials: true,
-  })
-);
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -18,6 +12,7 @@ const cookieParser = require("cookie-parser");
 
 mongoose.connect(process.env.MONGODB_URI);
 
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(userRoutes);
