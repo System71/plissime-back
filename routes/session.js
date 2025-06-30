@@ -3,6 +3,8 @@ const router = express.Router();
 const Session = require("../models/Session");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 
+// \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\ 
+
 // ========== CREATE ==========
 router.post("/session/add", isAuthenticated, async (req, res) => {
   try {
@@ -116,8 +118,8 @@ router.get("/sessions/daily", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY UPCOMING SESSIONS ==========
-router.get("/sessions/upcoming", isAuthenticated, async (req, res) => {
+// ========== DISPLAY USER UPCOMING SESSIONS ==========
+router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
   const now = new Date();
   const tomorrow = new Date(
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
@@ -172,7 +174,7 @@ router.delete("/session/delete/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY NEXT CUSTOMER SESSION ==========
+// ========== DISPLAY NEXT CUSTOMER SESSION FOR USER DISPLAY ==========
 router.get("/sessions/next/:customerId", isAuthenticated, async (req, res) => {
   const { customerId } = req.params;
   try {
@@ -186,12 +188,65 @@ router.get("/sessions/next/:customerId", isAuthenticated, async (req, res) => {
     }).sort({ start: 1 });
 
     if (!nextSession) {
-      return res.status(404).json({ message: "Aucune session à venir" });
+      return res.status(204).json({ message: "Aucune session à venir" });
     }
     res.status(201).json(nextSession);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
+// \\ // \\ // \\ CUSTOMER DISPLAY // \\ // \\ // \\ 
+
+// ========== DISPLAY CUSTOMER UPCOMING SESSIONS ==========
+router.get("/sessions/customer/upcoming", isAuthenticated, async (req, res) => {
+  const now = new Date();
+  const tomorrow = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+  );
+  try {
+    const filter = { customer: req.customer._id, state: "Confirmée",start: { $gte: tomorrow } };
+
+    const upcomingSessions = await Session.find(filter)
+      .populate("coach")
+      .populate("customer");
+    res.status(201).json(upcomingSessions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY CUSTOMER SESSIONS TO PAID ==========
+router.get("/sessions/customer/topaid", isAuthenticated, async (req, res) => {
+  try {
+    const filter = { customer: req.customer._id, state: "À payer" };
+
+    const sessionsToPaid = await Session.find(filter)
+      .sort({ start: -1 })
+      .populate("coach")
+      .populate("customer");
+
+    res.status(200).json(sessionsToPaid);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY CUSTOMER SESSIONS PAID ==========
+router.get("/sessions/customer/paid", isAuthenticated, async (req, res) => {
+  try {
+    const filter = { customer: req.customer._id, state: "Payée" };
+
+    const sessionsPaid = await Session.find(filter)
+      .sort({ start: -1 })
+      .populate("coach")
+      .populate("customer");
+
+    res.status(200).json(sessionsPaid);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 module.exports = router;

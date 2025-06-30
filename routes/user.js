@@ -78,14 +78,18 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     //   newUser.account.avatar = avatar;
     // }
 
+    
     const account = await stripe.accounts.create({
       type: "express",
       country: "FR",
       email: email,
     });
+    
+    console.log("account=",account);
 
     newUser.stripe_id = account.id;
-
+    
+    console.log("newUser=",newUser);
     await newUser.save();
 
     res.status(200).json({
