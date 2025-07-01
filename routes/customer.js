@@ -27,12 +27,77 @@ router.get("/mycustomers", isAuthenticated, async (req, res) => {
 });
 
 // ========== DISPLAY ONE CUSTOMER ==========
-router.get("/customer/:id", isAuthenticated, async (req, res) => {
+router.get("/find/customer/:id", isAuthenticated, async (req, res) => {
   try {
     const customerTofind = await Customer.findById(req.params.id);
     res.status(201).json(customerTofind);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY CUSTOMER INFORMATIONS ==========
+router.get("/customer/informations", isAuthenticated, async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.customer._id);
+    res.status(200).json(customer);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// ========== MODIFY CUSTOMER INFORMATIONS ==========
+router.put("/customer/informations", isAuthenticated, async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+      name,
+      firstName,
+      address,
+      zip,
+      city,
+      phone,
+      birthday,
+      activity,
+      weight,
+      size,
+      workingTime,
+      availibility,
+      sportBackground,
+      healthProblem,
+      goals,
+    } = req.body;
+
+    console.log("req.body", req.body);
+
+    const customerToModify = await Customer.findByIdAndUpdate(
+      req.customer,
+      {
+        email: email,
+        password: password,
+        name: name,
+        firstName: firstName,
+        address: address,
+        zip: zip,
+        city: city,
+        phone: phone,
+        birthday: birthday,
+        activity: activity,
+        weight: weight,
+        size: size,
+        workingTime: workingTime,
+        availibility: availibility,
+        sportBackground: sportBackground,
+        healthProblem: healthProblem,
+        goals: goals,
+      },
+      { new: true }
+    );
+    console.log("customer modifié=", customerToModify);
+    res.status(201).json({ message: "Customer modifié!" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 

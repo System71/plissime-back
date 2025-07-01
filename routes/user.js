@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const Customer = require("../models/Customer");
 const fileUpload = require("express-fileupload");
 const SHA256 = require("crypto-js/sha256");
 const encBase64 = require("crypto-js/enc-base64");
@@ -8,6 +9,7 @@ const uid2 = require("uid2");
 // const convertToBase64 = require("../utils/converToBase64");
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ajoute cette clé dans ton `.env`
+const isAuthenticated = require("../middlewares/isAuthenticated");
 
 // ========== SIGNUP ==========
 router.post("/user/signup", fileUpload(), async (req, res) => {
@@ -78,18 +80,17 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     //   newUser.account.avatar = avatar;
     // }
 
-    
     const account = await stripe.accounts.create({
       type: "express",
       country: "FR",
       email: email,
     });
-    
-    console.log("account=",account);
+
+    console.log("account=", account);
 
     newUser.stripe_id = account.id;
-    
-    console.log("newUser=",newUser);
+
+    console.log("newUser=", newUser);
     await newUser.save();
 
     res.status(200).json({
@@ -158,6 +159,73 @@ router.get("/user/stripe-onboarding/:userId", async (req, res) => {
     res.status(200).json({ url: accountLink.url });
   } catch (error) {
     console.error("Erreur d'onboarding Stripe:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// ========== DISPLAY USER INFORMATIONS ==========
+router.get("/user/informations", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user);
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// ========== MODIFY USER INFORMATIONS ==========
+router.put("/user/informations", isAuthenticated, async (req, res) => {
+  try {
+    const {
+      email,
+      name,
+      firstName,
+      address,
+      zip,
+      city,
+      phone,
+      activity,
+      siret,
+      certification,
+      subscription,
+    } = req.body;
+
+    const userToModify = await User.findByIdAndUpdate(
+      req.user,
+      {
+        email: email,
+        name: name,
+        firstName: firstName,
+        address: address,
+        zip: zip,
+        city: city,
+        phone: phone,
+        activity: activity,
+        siret: siret,
+        certification: certification,
+        subscription: subscription,
+      },
+      { new: true }
+    );
+    console.log("user modifié=", userToModify);
+    res.status(201).json({ message: "User modifié!" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// ========== DISPLAY COACH INFORMATIONS ==========
+router.get("/mycoachs", isAuthenticated, async (req, res) => {
+  try {
+    console.log("req.customer", req.customer._id);
+    const customer = await Customer.findById(req.customer._id).populate(
+      "coachs"
+    );
+
+    console.log("coach(s)=", customer.coachs);
+
+    res.status(200).json(customer.coachs);
+  } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
   }
 });

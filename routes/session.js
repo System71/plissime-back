@@ -3,7 +3,7 @@ const router = express.Router();
 const Session = require("../models/Session");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 
-// \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\ 
+// \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\
 
 // ========== CREATE ==========
 router.post("/session/add", isAuthenticated, async (req, res) => {
@@ -129,6 +129,7 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
       coach: req.user,
       start: { $gte: tomorrow },
     })
+      .sort({ start: 1 })
       .populate("coach")
       .populate("customer");
 
@@ -141,7 +142,6 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
 // ========== MODIFY SESSION ==========
 router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
   try {
-    console.log("req.params=", req.params);
     const { title, start, end, state, content, price, project } = req.body;
 
     const sessionToModify = await Session.findByIdAndUpdate(
@@ -196,7 +196,7 @@ router.get("/sessions/next/:customerId", isAuthenticated, async (req, res) => {
   }
 });
 
-// \\ // \\ // \\ CUSTOMER DISPLAY // \\ // \\ // \\ 
+// \\ // \\ // \\ CUSTOMER DISPLAY // \\ // \\ // \\
 
 // ========== DISPLAY CUSTOMER UPCOMING SESSIONS ==========
 router.get("/sessions/customer/upcoming", isAuthenticated, async (req, res) => {
@@ -205,7 +205,11 @@ router.get("/sessions/customer/upcoming", isAuthenticated, async (req, res) => {
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
   );
   try {
-    const filter = { customer: req.customer._id, state: "Confirmée",start: { $gte: tomorrow } };
+    const filter = {
+      customer: req.customer._id,
+      state: "Confirmée",
+      start: { $gte: tomorrow },
+    };
 
     const upcomingSessions = await Session.find(filter)
       .populate("coach")
@@ -247,6 +251,5 @@ router.get("/sessions/customer/paid", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 module.exports = router;
