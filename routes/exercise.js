@@ -9,7 +9,7 @@ router.post("/exercise/add", isAuthenticated, async (req, res) => {
       req.body;
 
     const newProgram = new Program({
-      category: category,
+      movement: movement,
       series: series,
       repetitions: repetitions,
       weight: weight,

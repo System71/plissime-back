@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 
 const Exercise = mongoose.model("Exercise", {
-  category: {
+  movement: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "category",
   },
-  imageUrl: String,
   series: Number,
   repetitions: Number,
   weight: Number,

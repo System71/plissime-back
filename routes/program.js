@@ -26,4 +26,95 @@ router.post("/program/add", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== ADD NEW SESSION ==========
+router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
+  try {
+    const programToModify = await Program.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: {
+          sessions: {
+            day: "",
+            exercise: [],
+          },
+        },
+      },
+      { new: true }
+    );
+    console.log("programToModify=", programToModify);
+    res.status(201).json(programToModify);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY SESSION ==========
+router.get(
+  "/program/:programid/session/:sessionid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToFind = await Program.findById(req.params.programid);
+      console.log("programTofind=", programToFind);
+      res.status(201).json(programToFind.sessions[req.params.sessionid - 1]);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// ========== ADD NEW SESSION ==========
+router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
+  try {
+    const programToModify = await Program.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: {
+          sessions: {
+            day: "",
+            exercise: [],
+          },
+        },
+      },
+      { new: true }
+    );
+    console.log("programToModify=", programToModify);
+    res.status(201).json(programToModify);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+// ========== ADD NEW EXERCISE ==========
+router.post(
+  "/program/:programid/session/:sessionid/add",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const path = `sessions.(req.params.sessionid).exercices`;
+
+      const programToModify = await Program.findByIdAndUpdate(
+        req.params.programid,
+        {
+          $push: {
+            [path]: {
+              movement: "",
+              series: "",
+              repetitions: "",
+              weight: "",
+              duration: "",
+              restTime: "",
+              notes: "",
+            },
+          },
+        },
+        { new: true }
+      );
+      console.log("programToModify=", programToModify);
+      res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 module.exports = router;
