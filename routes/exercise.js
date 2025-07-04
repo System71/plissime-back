@@ -8,7 +8,7 @@ router.post("/exercise/add", isAuthenticated, async (req, res) => {
     const { category, series, repetitions, weight, duration, restTime, notes } =
       req.body;
 
-    const newProgram = new Program({
+    const newExercise = new Exercise({
       movement: movement,
       series: series,
       repetitions: repetitions,
@@ -18,7 +18,7 @@ router.post("/exercise/add", isAuthenticated, async (req, res) => {
       notes: notes,
     });
 
-    res.status(201).json(newProgram);
+    res.status(201).json(newExercise);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

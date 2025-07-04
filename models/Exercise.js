@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Exercise = mongoose.model("Exercise", {
   movement: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "category",
+    ref: "movement",
   },
   series: Number,
   repetitions: Number,

@@ -10,7 +10,13 @@ const Session = mongoose.model("Session", {
   },
   content: String,
   price: Number,
-  project: String,
+  program: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Program",
+  },
+  sessionType: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
   report: Object,
   coach: {
     type: mongoose.Schema.Types.ObjectId,

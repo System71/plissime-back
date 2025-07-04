@@ -8,7 +8,7 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // ========== CREATE ==========
 router.post("/session/add", isAuthenticated, async (req, res) => {
   try {
-    const { title, start, end, state, content, price, project, customer } =
+    const { title, start, end, state, content, price, program, customer } =
       req.body;
 
     console.log("req.body=", req.body);
@@ -20,7 +20,7 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       state: state,
       content: content,
       price: price,
-      project: project,
+      program: program,
       coach: req.user.id,
       customer: customer,
     });
@@ -142,7 +142,7 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
 // ========== MODIFY SESSION ==========
 router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
   try {
-    const { title, start, end, state, content, price, project } = req.body;
+    const { title, start, end, state, content, price, program } = req.body;
 
     const sessionToModify = await Session.findByIdAndUpdate(
       req.params.id,
@@ -153,7 +153,7 @@ router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
         state: state,
         content: content,
         price: price,
-        project: project,
+        program: program,
       },
       { new: true }
     );
