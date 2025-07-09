@@ -9,6 +9,7 @@ const sessionRoutes = require("./routes/session");
 const calendarRoutes = require("./routes/calendar");
 const dashboardRoutes = require("./routes/sales");
 const programRoutes = require("./routes/program");
+const movementRoutes = require("./routes/movement");
 const cookieParser = require("cookie-parser");
 
 mongoose.connect(process.env.MONGODB_URI);
@@ -22,6 +23,7 @@ app.use(calendarRoutes);
 app.use(sessionRoutes);
 app.use(dashboardRoutes);
 app.use(programRoutes);
+app.use(movementRoutes);
 
 app.get("/", (req, res) => {
   res.status(400).send("coucou");

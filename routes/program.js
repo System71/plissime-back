@@ -26,28 +26,6 @@ router.post("/program/add", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== ADD NEW SESSION ==========
-router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
-  try {
-    const programToModify = await Program.findByIdAndUpdate(
-      req.params.id,
-      {
-        $push: {
-          sessions: {
-            day: "",
-            exercise: [],
-          },
-        },
-      },
-      { new: true }
-    );
-    console.log("programToModify=", programToModify);
-    res.status(201).json(programToModify);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
 // ========== DISPLAY SESSION ==========
 router.get(
   "/program/:programid/session/:sessionid",
@@ -83,6 +61,7 @@ router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 // ========== ADD NEW EXERCISE ==========
 router.post(
   "/program/:programid/session/:sessionid/exercise/add",
@@ -91,7 +70,7 @@ router.post(
     try {
       const program = await Program.findById(req.params.programid);
 
-      program.sessions[req.params.sessionid].exercises.push({
+      program.sessions[req.params.sessionid - 1].exercises.push({
         movement: null,
         series: 0,
         repetitions: 0,
@@ -110,5 +89,33 @@ router.post(
     }
   }
 );
+
+// // ========== DISPLAY EXERCISES ==========
+// router.post(
+//   "/program/:programid/session/:sessionid/exercise/add",
+//   isAuthenticated,
+//   async (req, res) => {
+//     try {
+//       const program = await Program.findById(req.params.programid);
+
+//       program.sessions[req.params.sessionid].exercises.push({
+//         movement: null,
+//         series: 0,
+//         repetitions: 0,
+//         weight: 0,
+//         duration: 0,
+//         restTime: 0,
+//         notes: "",
+//       });
+
+//       await program.save();
+
+//       console.log("program=", program);
+//       res.status(201).json(program);
+//     } catch (error) {
+//       res.status(500).json({ message: error.message });
+//     }
+//   }
+// );
 
 module.exports = router;
