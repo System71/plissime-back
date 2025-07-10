@@ -6,14 +6,13 @@ const Program = require("../models/Program");
 // ========== CREATE PROGRAM ==========
 router.post("/program/add", isAuthenticated, async (req, res) => {
   try {
-    const { title, startDate, endDate, notes, sessions } = req.body;
+    const { title, duration, notes, sessions } = req.body;
 
     const newProgram = new Program({
       title: title,
       coach: req.user,
       // customer: customer,
-      startDate: startDate,
-      endDate: endDate,
+      duration: duration,
       notes: notes,
       sessions: sessions,
     });
@@ -21,6 +20,24 @@ router.post("/program/add", isAuthenticated, async (req, res) => {
     await newProgram.save();
 
     res.status(201).json(newProgram);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY COACH PROGRAMS ==========
+router.get("/programs", isAuthenticated, async (req, res) => {
+  try {
+    console.log("dans le try");
+    const filter = { coach: req.user._id };
+    console.log("filtre=", filter);
+
+    let programs = await Program.find(filter)
+      .sort({ start: 1 })
+      .populate("coach");
+    // .populate("customer");
+
+    res.status(200).json(programs);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

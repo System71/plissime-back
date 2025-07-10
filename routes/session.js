@@ -37,7 +37,6 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
 router.get("/sessions", isAuthenticated, async (req, res) => {
   try {
     const { name } = req.query;
-    console.log("name=", name);
     const filter = { coach: req.user._id, state: { $ne: "Payée" } };
 
     let sessions = await Session.find(filter)
