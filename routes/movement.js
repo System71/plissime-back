@@ -7,7 +7,6 @@ const Movement = require("../models/Movement");
 router.get("/movements", isAuthenticated, async (req, res) => {
   try {
     const movements = await Movement.find();
-    console.log("movements=", movements);
     res.status(201).json(movements);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -12,6 +12,7 @@ router.get("/sales/month", isAuthenticated, async (req, res) => {
     const result = await Session.aggregate([
       {
         $match: {
+          coach: req.user._id,
           start: { $gte: startOfMonth },
           end: { $lt: now },
           state: "Payée",
@@ -42,6 +43,7 @@ router.get("/sales/year", isAuthenticated, async (req, res) => {
     const result = await Session.aggregate([
       {
         $match: {
+          coach: req.user._id,
           start: { $gte: startOfYear },
           end: { $lt: now },
           state: "Payée",
@@ -67,6 +69,7 @@ router.get("/sales/upcoming", isAuthenticated, async (req, res) => {
     const result = await Session.aggregate([
       {
         $match: {
+          coach: req.user._id,
           state: "Confirmée",
         },
       },

@@ -11,7 +11,6 @@ router.post("/program/add", isAuthenticated, async (req, res) => {
     const newProgram = new Program({
       title: title,
       coach: req.user,
-      // customer: customer,
       duration: duration,
       notes: notes,
       sessions: sessions,
@@ -25,17 +24,34 @@ router.post("/program/add", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== MODIFY PROGRAM ==========
+router.put("/program/modify/:id", isAuthenticated, async (req, res) => {
+  try {
+    const { title, duration, notes, sessions } = req.body;
+
+    const programToModify = await Program.findByIdAndUpdate(
+      req.params.id,
+      {
+        title: title,
+        duration: duration,
+        notes: notes,
+      },
+      { new: true }
+    );
+    res.status(201).json({ message: "Programme modifiée!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== DISPLAY COACH PROGRAMS ==========
 router.get("/programs", isAuthenticated, async (req, res) => {
   try {
-    console.log("dans le try");
     const filter = { coach: req.user._id };
-    console.log("filtre=", filter);
 
     let programs = await Program.find(filter)
-      .sort({ start: 1 })
-      .populate("coach");
-    // .populate("customer");
+      .populate("coach")
+      .populate("sessions.exercises.movement");
 
     res.status(200).json(programs);
   } catch (error) {
@@ -43,14 +59,26 @@ router.get("/programs", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY SESSION ==========
+// ========== DISPLAY ONE PROGRAM ==========
+router.get("/programs/:id", isAuthenticated, async (req, res) => {
+  try {
+    let programToFind = await Program.findById(req.params.id).populate("coach");
+
+    res.status(200).json(programToFind);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY ONE SESSION ==========
 router.get(
   "/program/:programid/session/:sessionid",
   isAuthenticated,
   async (req, res) => {
     try {
-      const programToFind = await Program.findById(req.params.programid);
-      console.log("programTofind=", programToFind);
+      const programToFind = await Program.findById(
+        req.params.programid
+      ).populate("sessions.exercises.movement");
       res.status(201).json(programToFind.sessions[req.params.sessionid - 1]);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -72,7 +100,6 @@ router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
       },
       { new: true }
     );
-    console.log("programToModify=", programToModify);
     res.status(201).json(programToModify);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -85,21 +112,30 @@ router.post(
   isAuthenticated,
   async (req, res) => {
     try {
+      const {
+        movement,
+        series,
+        repetitions,
+        weight,
+        duration,
+        restTime,
+        notes,
+      } = req.body;
+
       const program = await Program.findById(req.params.programid);
 
       program.sessions[req.params.sessionid - 1].exercises.push({
-        movement: null,
-        series: 0,
-        repetitions: 0,
-        weight: 0,
-        duration: 0,
-        restTime: 0,
-        notes: "",
+        movement: movement,
+        series: series,
+        repetitions: repetitions,
+        weight: weight,
+        duration: duration,
+        restTime: restTime,
+        notes: notes,
       });
 
       await program.save();
 
-      console.log("program=", program);
       res.status(201).json(program);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -107,32 +143,97 @@ router.post(
   }
 );
 
-// // ========== DISPLAY EXERCISES ==========
-// router.post(
-//   "/program/:programid/session/:sessionid/exercise/add",
-//   isAuthenticated,
-//   async (req, res) => {
-//     try {
-//       const program = await Program.findById(req.params.programid);
+// ========== DISPLAY ONE EXERCISE ==========
+router.get(
+  "/program/:programid/session/:sessionid/exercise/:exerciseid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToFind = await Program.findById(
+        req.params.programid
+      ).populate("sessions.exercises.movement");
 
-//       program.sessions[req.params.sessionid].exercises.push({
-//         movement: null,
-//         series: 0,
-//         repetitions: 0,
-//         weight: 0,
-//         duration: 0,
-//         restTime: 0,
-//         notes: "",
-//       });
+      programToFind.sessions[req.params.sessionid - 1].exercises.map((exo) => {
+        if (String(exo._id) === req.params.exerciseid) {
+          res.status(201).json(exo);
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
 
-//       await program.save();
+// ========== MODIFY EXERCISE ==========
+router.put(
+  "/program/:programid/session/:sessionid/exercise/modify/:exerciseid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const {
+        category,
+        movement,
+        series,
+        repetitions,
+        weight,
+        duration,
+        restTime,
+        notes,
+      } = req.body;
 
-//       console.log("program=", program);
-//       res.status(201).json(program);
-//     } catch (error) {
-//       res.status(500).json({ message: error.message });
-//     }
-//   }
-// );
+      const programToModify = await Program.findById(req.params.programid);
+      if (!programToModify)
+        return res.status(404).json({ message: "Programme non trouvé" });
+
+      const exercise = programToModify.sessions[
+        req.params.sessionid - 1
+      ].exercises.find((exo) => String(exo._id) === req.params.exerciseid);
+      if (!exercise)
+        return res.status(404).json({ message: "Exercice non trouvé" });
+
+      exercise.movement = movement;
+      exercise.series = series;
+      exercise.repetitions = repetitions;
+      exercise.weight = weight;
+      exercise.duration = duration;
+      exercise.restTime = restTime;
+      exercise.notes = notes;
+
+      await programToModify.save();
+
+      res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// ========== DELETE EXERCISE ==========
+router.delete(
+  "/program/:programid/session/:sessionid/exercise/:exerciseid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToModify = await Program.findById(
+        req.params.programid
+      ).populate("sessions.exercises.movement");
+
+      const sessionIndex = req.params.sessionid - 1;
+      const session = programToModify.sessions[sessionIndex];
+
+      const exerciseIndex = session.exercises.findIndex(
+        (exo) => String(exo._id) === req.params.exerciseid
+      );
+
+      session.exercises.splice(exerciseIndex, 1);
+
+      await programToModify.save();
+
+      res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
 
 module.exports = router;
