@@ -14,6 +14,7 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // ========== SIGNUP ==========
 router.post("/user/signup", fileUpload(), async (req, res) => {
   try {
+    console.log("je suis la!");
     const password = req.body.password;
     const salt = uid2(16);
     const hash = SHA256(password + salt).toString(encBase64);
@@ -93,14 +94,7 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     await newUser.save();
     console.log("newUser=", newUser);
 
-    res.status(200).json({
-      _id: newUser.id,
-      token: newUser.token,
-      account: {
-        email: newUser.email,
-        // Voir pour confirmé l'avatar
-      },
-    });
+    res.status(200).json(newUser);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
