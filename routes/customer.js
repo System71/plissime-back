@@ -36,6 +36,18 @@ router.get("/find/customer/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== CHECK IF EMAIL ALREADY EXIST ==========
+router.get("/customer/checkmail/:email", isAuthenticated, async (req, res) => {
+  console.log("on the road");
+  try {
+    const customerTofind = await Customer.findOne({ email: req.params.email });
+    console.log(customerTofind);
+    res.status(201).json(customerTofind);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== DISPLAY CUSTOMER INFORMATIONS ==========
 router.get("/customer/informations", isAuthenticated, async (req, res) => {
   try {
@@ -96,6 +108,24 @@ router.put("/customer/informations", isAuthenticated, async (req, res) => {
     );
     console.log("customer modifié=", customerToModify);
     res.status(201).json({ message: "Customer modifié!" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// ========== ADD EXISTING CUSTOMER TO A COACH ==========
+// ATTENTION IL FAUDRA VERIFIER SI LE COACH N'A PAS DEJA CE CLIENT AU CAS OU! (DOUBLE AJOUT)
+router.put("/customer/add", isAuthenticated, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const customerToAdd = await Customer.findOne({ email: email });
+
+    customerToAdd.coachs.push(req.user._id);
+
+    await customerToAdd.save();
+
+    res.status(201).json({ message: "Customer ajouté au coach!" });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
   }
