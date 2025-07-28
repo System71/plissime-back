@@ -10,8 +10,13 @@ const Program = mongoose.model("Program", {
   ],
   customers: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
+      informations: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+      },
+      progress: Number,
+      start: Date,
+      lastUpdate: Date,
     },
   ],
   duration: Number,

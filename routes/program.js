@@ -51,6 +51,7 @@ router.get("/programs", isAuthenticated, async (req, res) => {
 
     let programs = await Program.find(filter)
       .populate("coach")
+      .populate("customers.informations")
       .populate("sessions.exercises.movement");
 
     res.status(200).json(programs);
@@ -230,6 +231,36 @@ router.delete(
       await programToModify.save();
 
       res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// ========== ADD CUSTOMER TO A PROGRAM ==========
+router.put(
+  "/program/:programid/customer/add/:customerid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToModify = await Program.findById(req.params.programid);
+      if (!programToModify)
+        return res.status(404).json({ message: "Programme non trouvé" });
+
+      programToModify.customers.push({
+        informations: req.params.customerid,
+        progress: 0,
+        start: new Date(),
+        lastUpdate: new Date(),
+      });
+
+      await programToModify.save();
+
+      const programModified = await Program.findById(
+        req.params.programid
+      ).populate("customers.informations");
+
+      res.status(201).json(programModified.customers);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
