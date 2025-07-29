@@ -44,10 +44,38 @@ router.put("/program/modify/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DELETE PROGRAM ==========
+router.delete("/program/:id", isAuthenticated, async (req, res) => {
+  try {
+    console.log("TRYYYYYY");
+    const programToDelete = await Program.findByIdAndDelete(req.params.id);
+
+    res.status(201).json({ message: "Programme supprimé" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== DISPLAY COACH PROGRAMS ==========
 router.get("/programs", isAuthenticated, async (req, res) => {
   try {
     const filter = { coach: req.user._id };
+
+    let programs = await Program.find(filter)
+      .populate("coach")
+      .populate("customers.informations")
+      .populate("sessions.exercises.movement");
+
+    res.status(200).json(programs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY CUSTOMER PROGRAMS ==========
+router.get("/myprograms", isAuthenticated, async (req, res) => {
+  try {
+    const filter = { "customers.informations": req.customer._id };
 
     let programs = await Program.find(filter)
       .populate("coach")
@@ -106,6 +134,89 @@ router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// ========== MARK SESSION DONE BY CUSTOMER ==========
+router.put(
+  "/program/:programid/progress/:sessionid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToModify = await Program.findById(
+        req.params.programid
+      ).populate("customers.informations");
+      if (!programToModify)
+        return res.status(404).json({ message: "Programme non trouvé" });
+
+      const customerToFind = programToModify.customers.find((customer) =>
+        customer.informations._id.equals(req.customer._id)
+      );
+      if (!customerToFind)
+        return res.status(404).json({ message: "Client non trouvé" });
+
+      customerToFind.progress = req.params.sessionid;
+      customerToFind.lastUpdate = new Date();
+
+      await programToModify.save();
+
+      res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// ========== MARK SESSION UNDONE BY CUSTOMER ==========
+router.put(
+  "/program/:programid/progress/undone/:sessionid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToModify = await Program.findById(
+        req.params.programid
+      ).populate("customers.informations");
+      if (!programToModify)
+        return res.status(404).json({ message: "Programme non trouvé" });
+
+      const customerToFind = programToModify.customers.find((customer) =>
+        customer.informations._id.equals(req.customer._id)
+      );
+      if (!customerToFind)
+        return res.status(404).json({ message: "Client non trouvé" });
+
+      customerToFind.progress = req.params.sessionid - 1;
+      customerToFind.lastUpdate = new Date();
+
+      await programToModify.save();
+
+      res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// ========== DISPLAY CUSTOMER INFORMATIONS FOR SPECIFIC PROGRAM ==========
+router.get(
+  "/program/:programid/customer/informations",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToFind = await Program.findById(
+        req.params.programid
+      ).populate("customers.informations");
+
+      const customerToFind = programToFind.customers.find((customer) =>
+        customer.informations._id.equals(req.customer._id)
+      );
+      if (!customerToFind)
+        return res.status(404).json({ message: "Client non trouvé" });
+
+      res.status(200).json(customerToFind);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
 
 // ========== ADD NEW EXERCISE ==========
 router.post(
