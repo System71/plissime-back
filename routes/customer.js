@@ -137,6 +137,8 @@ router.put("/customer/activation/:token", async (req, res) => {
     const salt = uid2(16);
     const hash = SHA256(password + salt).toString(encBase64);
 
+    console.log("req.body=", req.body);
+
     const {
       email,
       name,
@@ -181,6 +183,9 @@ router.put("/customer/activation/:token", async (req, res) => {
       },
       { new: true }
     );
+
+    console.log("customer=", customerToFind);
+
     res.status(200).json({
       message: "Compte activé avec succés!",
     });

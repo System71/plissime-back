@@ -3,6 +3,8 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
 const Program = require("../models/Program");
 
+//__________________________________ PROGRAMS __________________________________
+
 // ========== CREATE PROGRAM ==========
 router.post("/program/add", isAuthenticated, async (req, res) => {
   try {
@@ -72,6 +74,47 @@ router.get("/programs", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DISPLAY ONE PROGRAM ==========
+router.get("/programs/:id", isAuthenticated, async (req, res) => {
+  try {
+    let programToFind = await Program.findById(req.params.id).populate("coach");
+
+    res.status(200).json(programToFind);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== ADD CUSTOMER TO A PROGRAM ==========
+router.put(
+  "/program/:programid/customer/add/:customerid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToModify = await Program.findById(req.params.programid);
+      if (!programToModify)
+        return res.status(404).json({ message: "Programme non trouvé" });
+
+      programToModify.customers.push({
+        informations: req.params.customerid,
+        progress: 0,
+        start: new Date(),
+        lastUpdate: new Date(),
+      });
+
+      await programToModify.save();
+
+      const programModified = await Program.findById(
+        req.params.programid
+      ).populate("customers.informations");
+
+      res.status(201).json(programModified.customers);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 // ========== DISPLAY CUSTOMER PROGRAMS ==========
 router.get("/myprograms", isAuthenticated, async (req, res) => {
   try {
@@ -88,12 +131,46 @@ router.get("/myprograms", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY ONE PROGRAM ==========
-router.get("/programs/:id", isAuthenticated, async (req, res) => {
-  try {
-    let programToFind = await Program.findById(req.params.id).populate("coach");
+// ========== DISPLAY CUSTOMER INFORMATIONS FOR SPECIFIC PROGRAM ==========
+router.get(
+  "/program/:programid/customer/informations",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToFind = await Program.findById(
+        req.params.programid
+      ).populate("customers.informations");
 
-    res.status(200).json(programToFind);
+      const customerToFind = programToFind.customers.find((customer) =>
+        customer.informations._id.equals(req.customer._id)
+      );
+      if (!customerToFind)
+        return res.status(404).json({ message: "Client non trouvé" });
+
+      res.status(200).json(customerToFind);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+//__________________________________ SESSIONS __________________________________
+
+// ========== ADD NEW SESSION ==========
+router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
+  try {
+    const programToModify = await Program.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: {
+          sessions: {
+            exercise: [],
+          },
+        },
+      },
+      { new: true }
+    );
+    res.status(201).json(programToModify);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -115,25 +192,26 @@ router.get(
   }
 );
 
-// ========== ADD NEW SESSION ==========
-router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
-  try {
-    const programToModify = await Program.findByIdAndUpdate(
-      req.params.id,
-      {
-        $push: {
-          sessions: {
-            exercise: [],
-          },
-        },
-      },
-      { new: true }
-    );
-    res.status(201).json(programToModify);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+// ========== DELETE SESSION ==========
+router.delete(
+  "/program/:programid/session/:sessionid",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const programToModify = await Program.findById(req.params.programid);
+      if (!programToModify)
+        return res.status(404).json({ message: "Programme non trouvé" });
+
+      programToModify.sessions.splice(req.params.sessionid - 1, 1);
+
+      await programToModify.save();
+
+      res.status(201).json(programToModify);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
-});
+);
 
 // ========== MARK SESSION DONE BY CUSTOMER ==========
 router.put(
@@ -195,28 +273,7 @@ router.put(
   }
 );
 
-// ========== DISPLAY CUSTOMER INFORMATIONS FOR SPECIFIC PROGRAM ==========
-router.get(
-  "/program/:programid/customer/informations",
-  isAuthenticated,
-  async (req, res) => {
-    try {
-      const programToFind = await Program.findById(
-        req.params.programid
-      ).populate("customers.informations");
-
-      const customerToFind = programToFind.customers.find((customer) =>
-        customer.informations._id.equals(req.customer._id)
-      );
-      if (!customerToFind)
-        return res.status(404).json({ message: "Client non trouvé" });
-
-      res.status(200).json(customerToFind);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
-);
+//__________________________________ EXERCISES __________________________________
 
 // ========== ADD NEW EXERCISE ==========
 router.post(
@@ -342,36 +399,6 @@ router.delete(
       await programToModify.save();
 
       res.status(201).json(programToModify);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
-);
-
-// ========== ADD CUSTOMER TO A PROGRAM ==========
-router.put(
-  "/program/:programid/customer/add/:customerid",
-  isAuthenticated,
-  async (req, res) => {
-    try {
-      const programToModify = await Program.findById(req.params.programid);
-      if (!programToModify)
-        return res.status(404).json({ message: "Programme non trouvé" });
-
-      programToModify.customers.push({
-        informations: req.params.customerid,
-        progress: 0,
-        start: new Date(),
-        lastUpdate: new Date(),
-      });
-
-      await programToModify.save();
-
-      const programModified = await Program.findById(
-        req.params.programid
-      ).populate("customers.informations");
-
-      res.status(201).json(programModified.customers);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

@@ -14,7 +14,7 @@ const Session = mongoose.model("Session", {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Program",
   },
-  sessionType: {
+  session: {
     type: mongoose.Schema.Types.ObjectId,
   },
   report: Object,
