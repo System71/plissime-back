@@ -35,9 +35,10 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
 
 // ========== DISPLAY COACHS SESSIONS ==========
 router.get("/sessions", isAuthenticated, async (req, res) => {
+  const now = new Date();
   try {
     const { name } = req.query;
-    const filter = { coach: req.user._id, state: { $ne: "Payée" } };
+    const filter = { coach: req.user._id, start: { $gte: now } };
 
     let sessions = await Session.find(filter)
       .sort({ start: 1 })
@@ -124,15 +125,23 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
     Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
   );
   try {
-    const upcomingSessions = await Session.find({
-      coach: req.user,
-      start: { $gte: tomorrow },
-    })
+    const { name } = req.query;
+    const filter = { coach: req.user._id, start: { $gte: tomorrow } };
+
+    let upcomingSessions = await Session.find(filter)
       .sort({ start: 1 })
       .populate("coach")
       .populate("customer");
 
-    res.status(201).json(upcomingSessions);
+    if (name) {
+      const regex = new RegExp(name, "i");
+      upcomingSessions = upcomingSessions.filter((session) =>
+        session.customer?.name?.match(regex)
+      );
+    }
+
+    console.log("upcomingSessions=", upcomingSessions);
+    res.status(200).json(upcomingSessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

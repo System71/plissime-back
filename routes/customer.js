@@ -40,7 +40,6 @@ router.get("/customer/checkmail/:email", isAuthenticated, async (req, res) => {
   console.log("on the road");
   try {
     const customerTofind = await Customer.findOne({ email: req.params.email });
-    console.log(customerTofind);
     res.status(201).json(customerTofind);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -80,8 +79,6 @@ router.put("/customer/informations", isAuthenticated, async (req, res) => {
       goals,
     } = req.body;
 
-    console.log("req.body", req.body);
-
     const customerToModify = await Customer.findByIdAndUpdate(
       req.customer,
       {
@@ -105,7 +102,6 @@ router.put("/customer/informations", isAuthenticated, async (req, res) => {
       },
       { new: true }
     );
-    console.log("customer modifié=", customerToModify);
     res.status(201).json({ message: "Customer modifié!" });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
@@ -137,8 +133,6 @@ router.put("/customer/activation/:token", async (req, res) => {
     const salt = uid2(16);
     const hash = SHA256(password + salt).toString(encBase64);
 
-    console.log("req.body=", req.body);
-
     const {
       email,
       name,
@@ -160,7 +154,7 @@ router.put("/customer/activation/:token", async (req, res) => {
     } = req.body;
 
     const customerToFind = await Customer.findOneAndUpdate(
-      { token: req.params.token },
+      { token: req.params.token, isActive: false },
       {
         isActive: true,
         email: email,
@@ -184,7 +178,9 @@ router.put("/customer/activation/:token", async (req, res) => {
       { new: true }
     );
 
-    console.log("customer=", customerToFind);
+    if (!customerToFind) {
+      return res.status(409).json({ message: "Ce compte a déjà été activé." });
+    }
 
     res.status(200).json({
       message: "Compte activé avec succés!",
