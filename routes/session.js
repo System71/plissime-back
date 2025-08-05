@@ -33,12 +33,41 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY COACHS SESSIONS ==========
-router.get("/sessions", isAuthenticated, async (req, res) => {
+// ========== DISPLAY COACHS UPCOMING SESSIONS ==========
+router.get("/sessions/upcoming", isAuthenticated, async (req, res) => {
   const now = new Date();
   try {
     const { name } = req.query;
     const filter = { coach: req.user._id, start: { $gte: now } };
+
+    let sessions = await Session.find(filter)
+      .sort({ start: 1 })
+      .populate("coach")
+      .populate("customer");
+
+    if (name) {
+      const regex = new RegExp(name, "i");
+      sessions = sessions.filter((session) =>
+        session.customer?.name?.match(regex)
+      );
+    }
+
+    res.status(200).json(sessions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY COACHS PAST SESSIONS ==========
+router.get("/sessions/past", isAuthenticated, async (req, res) => {
+  const now = new Date();
+  try {
+    const { name } = req.query;
+    const filter = {
+      coach: req.user._id,
+      start: { $lt: now },
+      state: "Confirmée",
+    };
 
     let sessions = await Session.find(filter)
       .sort({ start: 1 })
@@ -118,7 +147,7 @@ router.get("/sessions/daily", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== DISPLAY USER UPCOMING SESSIONS ==========
+// ========== DISPLAY USER UPCOMING SESSIONS (EXCEPT TODAY) ==========
 router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
   const now = new Date();
   const tomorrow = new Date(
