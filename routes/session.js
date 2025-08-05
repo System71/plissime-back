@@ -11,8 +11,6 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
     const { title, start, end, state, content, price, program, customer } =
       req.body;
 
-    console.log("req.body=", req.body);
-
     const newSession = new Session({
       title: title,
       start: start,
@@ -26,7 +24,6 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
     });
 
     await newSession.save();
-    console.log(newSession);
     res.status(201).json(newSession);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -91,7 +88,6 @@ router.get("/sessions/past", isAuthenticated, async (req, res) => {
 router.get("/sessions/paid", isAuthenticated, async (req, res) => {
   try {
     const { name } = req.query;
-    console.log("name=", name);
     const filter = { coach: req.user._id, state: "Payée" };
 
     let sessions = await Session.find(filter)
@@ -169,7 +165,6 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
       );
     }
 
-    console.log("upcomingSessions=", upcomingSessions);
     res.status(200).json(upcomingSessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -194,7 +189,6 @@ router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
       },
       { new: true }
     );
-    console.log("session modifiée=", sessionToModify);
     res.status(201).json({ message: "Session modifiée!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -215,7 +209,6 @@ router.delete("/session/delete/:id", isAuthenticated, async (req, res) => {
 router.get("/sessions/next/:customerId", isAuthenticated, async (req, res) => {
   const { customerId } = req.params;
   try {
-    console.log("next!");
     const now = new Date();
 
     const nextSession = await Session.findOne({

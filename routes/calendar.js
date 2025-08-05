@@ -16,7 +16,6 @@ router.get("/auth/google/callback", async (req, res) => {
     // Save these somewhere safe so they can be used at a later time.
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
-    console.log("token=", tokens);
 
     res.send("Authentification réussie !");
   } catch (error) {

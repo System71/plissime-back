@@ -24,6 +24,15 @@ const Customer = mongoose.model("Customer", {
       ref: "User",
     },
   ],
+  comments: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      content: String,
+    },
+  ],
   //planning infos
   avatar: Object,
   token: String,

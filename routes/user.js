@@ -14,7 +14,6 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // ========== SIGNUP ==========
 router.post("/user/signup", fileUpload(), async (req, res) => {
   try {
-    console.log("je suis la!");
     const password = req.body.password;
     const salt = uid2(16);
     const hash = SHA256(password + salt).toString(encBase64);
@@ -92,7 +91,6 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     // newUser.stripe_id = account.id;
 
     await newUser.save();
-    console.log("newUser=", newUser);
 
     res.status(200).json(newUser);
   } catch (error) {
@@ -201,7 +199,6 @@ router.put("/user/informations", isAuthenticated, async (req, res) => {
       },
       { new: true }
     );
-    console.log("user modifié=", userToModify);
     res.status(201).json({ message: "User modifié!" });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
@@ -211,12 +208,9 @@ router.put("/user/informations", isAuthenticated, async (req, res) => {
 // ========== DISPLAY COACH INFORMATIONS ==========
 router.get("/mycoachs", isAuthenticated, async (req, res) => {
   try {
-    console.log("req.customer", req.customer._id);
     const customer = await Customer.findById(req.customer._id).populate(
       "coachs"
     );
-
-    console.log("coach(s)=", customer.coachs);
 
     res.status(200).json(customer.coachs);
   } catch (error) {

@@ -8,6 +8,7 @@ const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 // const convertToBase64 = require("../utils/converToBase64");
+const sgMail = require("../configuration/mailer.js");
 
 // ========== DISPLAY COACH CUSTOMERS ==========
 router.get("/mycustomers", isAuthenticated, async (req, res) => {
@@ -29,7 +30,7 @@ router.get("/mycustomers", isAuthenticated, async (req, res) => {
 router.get("/find/customer/:id", isAuthenticated, async (req, res) => {
   try {
     const customerTofind = await Customer.findById(req.params.id);
-    res.status(201).json(customerTofind);
+    res.status(200).json(customerTofind);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -37,7 +38,6 @@ router.get("/find/customer/:id", isAuthenticated, async (req, res) => {
 
 // ========== CHECK IF EMAIL ALREADY EXIST ==========
 router.get("/customer/checkmail/:email", isAuthenticated, async (req, res) => {
-  console.log("on the road");
   try {
     const customerTofind = await Customer.findOne({ email: req.params.email });
     res.status(201).json(customerTofind);
@@ -126,6 +126,70 @@ router.put("/customer/add", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== PRESIGNUP ==========
+router.post("/customer/presignup", isAuthenticated, async (req, res) => {
+  try {
+    const token = uid2(16);
+    const { email, name, firstName, phone } = req.body;
+
+    //Verification if email is provided
+    if (!email) {
+      return res.status(400).json({ message: "Email is missing" });
+    }
+
+    //Verification if email doesn't exist
+
+    const checkMail = await Customer.findOne({ email: email });
+
+    if (checkMail) {
+      return res.status(400).json({ message: "Email already used" });
+    }
+
+    const newCustomer = new Customer({
+      email: email,
+      name: name,
+      firstName: firstName,
+      phone: phone,
+      token: token,
+      coachs: [req.user],
+    });
+
+    await newCustomer.save();
+
+    const finalisationUrl = `http://localhost:5173/activation/${token}`;
+
+    const msg = {
+      to: email,
+      from: "rigaudier.pa@gmail.com", // Doit être vérifié dans SendGrid
+      subject: "Bienvenue sur Plissime - Crée ton espace personnel !",
+      html: `
+        <p>Salut ${firstName},</p>
+        <p>Ton coach vient de te rajouter à notre plateforme Plissime !</p>
+        <p>Tu peux dès maintenant créer ton espace personnel pour suivre tes entraînements, échanger avec ton coach et suivre tes progrès.</p>
+        <a href="${finalisationUrl}" style="display:inline-block;background-color:#007bff;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Finaliser mon inscription</a>
+        <p>Une fois connecté(e), tu seras automatiquement rattaché(e) à ton coach et tu pourras commencer à profiter de tout ce que la plateforme a à t’offrir.</p>
+        <p>Si tu rencontres le moindre souci, n’hésite pas à nous écrire.</p>
+        <p>Bienvenue chez Plissime 💪</p>
+        <p>A très vite!</p>
+      `,
+    };
+
+    await sgMail.send(msg);
+
+    res.status(200).json({
+      _id: newCustomer.id,
+      token: newCustomer.token,
+      account: {
+        email: newCustomer.email,
+        // Voir pour confirmé l'avatar
+      },
+      message: "Un mail d'activation a été envoyé au client.",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ========== ACTIVATION ==========
 router.put("/customer/activation/:token", async (req, res) => {
   try {
@@ -184,49 +248,6 @@ router.put("/customer/activation/:token", async (req, res) => {
 
     res.status(200).json({
       message: "Compte activé avec succés!",
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ========== PRESIGNUP ==========
-router.post("/customer/presignup", isAuthenticated, async (req, res) => {
-  try {
-    const token = uid2(16);
-    const { email, name, firstName, phone } = req.body;
-
-    //Verification if email is provided
-    if (!email) {
-      return res.status(400).json({ message: "Email is missing" });
-    }
-
-    //Verification if email doesn't exist
-
-    const checkMail = await Customer.findOne({ email: email });
-
-    if (checkMail) {
-      return res.status(400).json({ message: "Email already used" });
-    }
-
-    const newCustomer = new Customer({
-      email: email,
-      name: name,
-      firstName: firstName,
-      phone: phone,
-      token: token,
-      coachs: [req.user],
-    });
-
-    await newCustomer.save();
-
-    res.status(200).json({
-      _id: newCustomer.id,
-      token: newCustomer.token,
-      account: {
-        email: newCustomer.email,
-        // Voir pour confirmé l'avatar
-      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -318,8 +339,6 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
     // }
 
     await newCustomer.save();
-
-    console.log(newCustomer);
 
     res.status(200).json({
       _id: newCustomer.id,
