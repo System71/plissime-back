@@ -49,7 +49,6 @@ router.put("/program/modify/:id", isAuthenticated, async (req, res) => {
 // ========== DELETE PROGRAM ==========
 router.delete("/program/:id", isAuthenticated, async (req, res) => {
   try {
-    console.log("TRYYYYYY");
     const programToDelete = await Program.findByIdAndDelete(req.params.id);
 
     res.status(201).json({ message: "Programme supprimé" });

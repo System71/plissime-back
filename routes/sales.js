@@ -36,9 +36,7 @@ router.get("/sales/month", isAuthenticated, async (req, res) => {
 router.get("/sales/year", isAuthenticated, async (req, res) => {
   try {
     const now = new Date();
-    console.log("now=", now);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
-    console.log("startofYear=", startOfYear);
 
     const result = await Session.aggregate([
       {
