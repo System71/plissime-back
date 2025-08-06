@@ -126,7 +126,7 @@ router.put("/customer/add", isAuthenticated, async (req, res) => {
   }
 });
 
-// ========== PRESIGNUP ==========
+// ========== PRESIGNUP (AVEC ENVOI DU MAIL D'ACTIVATION) ==========
 router.post("/customer/presignup", isAuthenticated, async (req, res) => {
   try {
     const token = uid2(16);
@@ -156,11 +156,11 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
 
     await newCustomer.save();
 
-    const finalisationUrl = `http://localhost:5173/activation/${token}`;
+    const finalisationUrl = process.env.FRONTEND_URL + `activation/${token}`;
 
     const msg = {
       to: email,
-      from: "rigaudier.pa@gmail.com", // Doit être vérifié dans SendGrid
+      from: "nicolas.rokicki@plissime.fr", // Doit être vérifié dans SendGrid
       subject: "Bienvenue sur Plissime - Crée ton espace personnel !",
       html: `
         <p>Salut ${firstName},</p>
