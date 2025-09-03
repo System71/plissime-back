@@ -10,6 +10,7 @@ const calendarRoutes = require("./routes/calendar");
 const dashboardRoutes = require("./routes/sales");
 const programRoutes = require("./routes/program");
 const movementRoutes = require("./routes/movement");
+const stripeRoutes = require("./routes/stripe");
 const cookieParser = require("cookie-parser");
 
 mongoose.connect(process.env.MONGODB_URI);
@@ -24,6 +25,7 @@ app.use(sessionRoutes);
 app.use(dashboardRoutes);
 app.use(programRoutes);
 app.use(movementRoutes);
+app.use(stripeRoutes);
 
 app.get("/", (req, res) => {
   res.status(400).send("coucou");
