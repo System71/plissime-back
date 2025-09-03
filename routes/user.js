@@ -7,8 +7,6 @@ const SHA256 = require("crypto-js/sha256");
 const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
 // const convertToBase64 = require("../utils/converToBase64");
-const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ajoute cette clé dans ton `.env`
 const isAuthenticated = require("../middlewares/isAuthenticated");
 
 // ========== SIGNUP ==========
