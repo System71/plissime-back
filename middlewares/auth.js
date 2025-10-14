@@ -8,10 +8,9 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_REDIRECT_URI
 );
 
-// URL d'authentification Google
-const authUrl = oauth2Client.generateAuthUrl({
-  access_type: "offline",
-  scope: ["https://www.googleapis.com/auth/calendar.events"],
-});
+const SCOPES = [
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/calendar.events",
+];
 
-module.exports = { oauth2Client, authUrl };
+module.exports = { oauth2Client, SCOPES };
