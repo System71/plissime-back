@@ -55,6 +55,16 @@ router.get("/events", isAuthenticated, async (req, res) => {
     refresh_token: coach.oauth.refreshToken,
   });
 
+  oauth2Client.on("tokens", async (tokens) => {
+    const update = {};
+    if (tokens.access_token) update["oauth.accessToken"] = tokens.access_token;
+    if (tokens.refresh_token)
+      update["oauth.refreshToken"] = tokens.refresh_token;
+    if (tokens.expiry_date) update["oauth.expiryDate"] = tokens.expiry_date;
+    if (Object.keys(update).length > 0)
+      await User.findByIdAndUpdate(req.user, { $set: update });
+  });
+
   const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
   try {
@@ -72,19 +82,25 @@ router.get("/events", isAuthenticated, async (req, res) => {
       title: event.summary,
       start: event.start.dateTime || event.start.date,
       end: event.end.dateTime || event.end.date,
+      backgroundColor: "#4285F4",
+      borderColor: "#4285F4",
       source: "google",
     }));
 
     // 2. Récupérer les sessions internes de ta DB
-    const localEvents = await Session.find({ coach: req.user });
+    const localEvents = await Session.find({ coach: req.user }).populate(
+      "customer"
+    );
 
     console.log("session local = ", localEvents);
 
     const formattedLocalEvents = localEvents.map((session) => ({
       id: session._id,
-      title: session.title,
-      start: session.startDate,
-      end: session.endDate,
+      title: session.customer.name,
+      start: session.start,
+      end: session.end,
+      backgroundColor: "#34A853",
+      borderColor: "#34A853",
       source: "local",
     }));
 
