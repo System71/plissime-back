@@ -37,7 +37,7 @@ router.get("/auth/google/callback", async (req, res) => {
         expiryDate: tokens.expiry_date,
       },
     });
-    res.redirect("http://localhost:5173/planning"); // redirige vers le front
+    res.redirect(process.env.FRONTEND_URL + "/planning"); // redirige vers le front
   } catch (error) {
     res.status(500).json({ message: "Erreur lors de la connexion Google" });
   }
