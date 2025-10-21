@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const { oauth2Client, SCOPES } = require("../middlewares/auth");
+const { SCOPES, createOAuthClient } = require("../middlewares/auth");
 const { google } = require("googleapis");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const Session = require("../models/Session");
@@ -9,6 +9,7 @@ const Session = require("../models/Session");
 // Route pour rediriger l'utilisateur vers Google
 router.get("/auth/google/init", isAuthenticated, async (req, res) => {
   const userId = req.user._id;
+  const oauth2Client = createOAuthClient();
 
   const url = oauth2Client.generateAuthUrl({
     access_type: "offline",
@@ -27,9 +28,9 @@ router.get("/auth/google/callback", async (req, res) => {
     return res.status(400).send("Code d'autorisation manquant !");
   }
   try {
+    const oauth2Client = createOAuthClient();
     const { tokens } = await oauth2Client.getToken(code);
 
-    console.log("id=", state);
     await User.findByIdAndUpdate(state, {
       oauth: {
         accessToken: tokens.access_token,
@@ -49,12 +50,16 @@ router.get("/events", isAuthenticated, async (req, res) => {
   if (!coach || !coach.oauth.accessToken) {
     return res.status(400).json({ message: "Compte Google non lié" });
   }
+
+  const oauth2Client = createOAuthClient();
+
   // Configurer OAuth avec les tokens du coach
   oauth2Client.setCredentials({
     access_token: coach.oauth.accessToken,
     refresh_token: coach.oauth.refreshToken,
   });
 
+  //Modification du token si expiration
   oauth2Client.on("tokens", async (tokens) => {
     const update = {};
     if (tokens.access_token) update["oauth.accessToken"] = tokens.access_token;

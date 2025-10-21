@@ -186,6 +186,7 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
       message: "Un mail d'activation a été envoyé au client.",
     });
   } catch (error) {
+    console.log("error=", error);
     res.status(500).json({ message: error.message });
   }
 });
