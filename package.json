@@ -26,6 +26,7 @@
     "google-auth-library": "^9.15.1",
     "googleapis": "^105.0.0",
     "mongoose": "^8.9.3",
+    "nodemailer": "^7.0.10",
     "nodemon": "^3.1.9",
     "stripe": "^18.2.1",
     "uid2": "^1.0.0"

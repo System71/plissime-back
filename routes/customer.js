@@ -8,7 +8,8 @@ const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 // const convertToBase64 = require("../utils/converToBase64");
-const sgMail = require("../configuration/mailer.js");
+// const sgMail = require("../configuration/mailer_backup.js");
+const sendEmail = require("../configuration/mailer");
 
 // ========== DISPLAY COACH CUSTOMERS ==========
 router.get("/mycustomers", isAuthenticated, async (req, res) => {
@@ -158,23 +159,25 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
 
     const finalisationUrl = process.env.FRONTEND_URL + `activation/${token}`;
 
-    const msg = {
-      to: email,
-      from: "nicolas.rokicki@plissime.fr", // Doit être vérifié dans SendGrid
-      subject: "Bienvenue sur Plissime - Crée ton espace personnel !",
-      html: `
-        <p>Salut ${firstName},</p>
-        <p>Ton coach vient de te rajouter à notre plateforme Plissime !</p>
-        <p>Tu peux dès maintenant créer ton espace personnel pour suivre tes entraînements, échanger avec ton coach et suivre tes progrès.</p>
-        <a href="${finalisationUrl}" style="display:inline-block;background-color:#007bff;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Finaliser mon inscription</a>
-        <p>Une fois connecté(e), tu seras automatiquement rattaché(e) à ton coach et tu pourras commencer à profiter de tout ce que la plateforme a à t’offrir.</p>
-        <p>Si tu rencontres le moindre souci, n’hésite pas à nous écrire.</p>
-        <p>Bienvenue chez Plissime 💪</p>
-        <p>A très vite!</p>
-      `,
-    };
+    sendEmail(email, firstName, finalisationUrl);
 
-    await sgMail.send(msg);
+    // const msg = {
+    //   to: email,
+    //   from: "nicolas.rokicki@plissime.fr", // Doit être vérifié dans SendGrid
+    //   subject: "Bienvenue sur Plissime - Crée ton espace personnel !",
+    //   html: `
+    //     <p>Salut ${firstName},</p>
+    //     <p>Ton coach vient de te rajouter à notre plateforme Plissime !</p>
+    //     <p>Tu peux dès maintenant créer ton espace personnel pour suivre tes entraînements, échanger avec ton coach et suivre tes progrès.</p>
+    //     <a href="${finalisationUrl}" style="display:inline-block;background-color:#007bff;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Finaliser mon inscription</a>
+    //     <p>Une fois connecté(e), tu seras automatiquement rattaché(e) à ton coach et tu pourras commencer à profiter de tout ce que la plateforme a à t’offrir.</p>
+    //     <p>Si tu rencontres le moindre souci, n’hésite pas à nous écrire.</p>
+    //     <p>Bienvenue chez Plissime 💪</p>
+    //     <p>A très vite!</p>
+    //   `,
+    // };
+
+    // await sgMail.send(msg);
 
     res.status(200).json({
       _id: newCustomer.id,
