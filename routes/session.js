@@ -260,6 +260,8 @@ router.get("/sessions/customer/topaid", isAuthenticated, async (req, res) => {
       .populate("coach")
       .populate("customer");
 
+    console.log("Session à payer=", sessionsToPaid);
+
     res.status(200).json(sessionsToPaid);
   } catch (error) {
     res.status(500).json({ message: error.message });
