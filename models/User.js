@@ -12,7 +12,13 @@ const User = mongoose.model("User", {
   siret: String,
   certification: String,
   subscription: {
-    category: String,
+    category: { type: String, enum: ["basic", "premium"], default: "basic" },
+    type: {
+      type: String,
+      enum: ["monthly", "annual", null],
+      default: null,
+    },
+    lastPayment: Date,
     bills: [
       {
         type: mongoose.Schema.Types.ObjectId,

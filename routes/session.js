@@ -90,19 +90,43 @@ router.get("/sessions/paid", isAuthenticated, async (req, res) => {
     const { name } = req.query;
     const filter = { coach: req.user._id, state: "Payée" };
 
-    let sessions = await Session.find(filter)
+    let sessionsPaid = await Session.find(filter)
       .sort({ start: -1 })
       .populate("coach")
       .populate("customer");
 
     if (name) {
       const regex = new RegExp(name, "i");
-      sessions = sessions.filter((session) =>
+      sessionsPaid = sessionsPaid.filter((session) =>
         session.customer?.name?.match(regex)
       );
     }
 
-    res.status(200).json(sessions);
+    res.status(200).json(sessionsPaid);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY COACHS SESSIONS TO PAID ==========
+router.get("/sessions/topaid", isAuthenticated, async (req, res) => {
+  try {
+    const { name } = req.query;
+    const filter = { coach: req.user._id, state: "À payer" };
+
+    const sessionsToPaid = await Session.find(filter)
+      .sort({ start: -1 })
+      .populate("coach")
+      .populate("customer");
+
+    if (name) {
+      const regex = new RegExp(name, "i");
+      sessionsToPaid = sessionsToPaid.filter((session) =>
+        session.customer?.name?.match(regex)
+      );
+    }
+    console.log("session to paid=", sessionsToPaid);
+    res.status(200).json(sessionsToPaid);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
