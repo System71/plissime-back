@@ -6,6 +6,46 @@ const { google } = require("googleapis");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const Session = require("../models/Session");
 
+
+
+async function refreshTokenIfNeeded(user) {
+  const oauth2Client = createOAuthClient();
+
+  oauth2Client.setCredentials({
+    access_token: user.oauth.accessToken,
+    refresh_token: user.oauth.refreshToken,
+    expiry_date: user.oauth.expiryDate,
+  });
+
+  const isExpired = !user.oauth.expiryDate || user.oauth.expiryDate <= Date.now();
+
+  if (!isExpired) {
+    return oauth2Client; // rien à faire, token encore valide
+  }
+
+  console.log("🔁 Refresh du token Google en cours...");
+
+  try {
+    const { credentials } = await oauth2Client.refreshAccessToken();
+
+    await User.findByIdAndUpdate(user._id, {
+      "oauth.accessToken": credentials.access_token,
+      "oauth.expiryDate": credentials.expiry_date,
+      ...(credentials.refresh_token && { "oauth.refreshToken": credentials.refresh_token }),
+    });
+
+    oauth2Client.setCredentials(credentials);
+
+    console.log("✅ Token Google mis à jour !");
+    return oauth2Client;
+  } catch (err) {
+    console.error("❌ Erreur lors du rafraîchissement:", err);
+    throw new Error("Google token refresh failed");
+  }
+}
+
+
+
 // Route pour rediriger l'utilisateur vers Google
 router.get("/auth/google/init", isAuthenticated, async (req, res) => {
   const userId = req.user._id;
@@ -51,24 +91,8 @@ router.get("/events", isAuthenticated, async (req, res) => {
     return res.status(400).json({ message: "Compte Google non lié" });
   }
 
-  const oauth2Client = createOAuthClient();
-
-  // Configurer OAuth avec les tokens du coach
-  oauth2Client.setCredentials({
-    access_token: coach.oauth.accessToken,
-    refresh_token: coach.oauth.refreshToken,
-  });
-
-  //Modification du token si expiration
-  oauth2Client.on("tokens", async (tokens) => {
-    const update = {};
-    if (tokens.access_token) update["oauth.accessToken"] = tokens.access_token;
-    if (tokens.refresh_token)
-      update["oauth.refreshToken"] = tokens.refresh_token;
-    if (tokens.expiry_date) update["oauth.expiryDate"] = tokens.expiry_date;
-    if (Object.keys(update).length > 0)
-      await User.findByIdAndUpdate(req.user, { $set: update });
-  });
+  // 👉 IMPORTANT : On sécurise le token avant tout appel Google
+  const oauth2Client = await refreshTokenIfNeeded(coach);
 
   const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
@@ -97,7 +121,7 @@ router.get("/events", isAuthenticated, async (req, res) => {
       "customer"
     );
 
-    console.log("session local = ", localEvents);
+    // console.log("session local = ", localEvents);
 
     const formattedLocalEvents = localEvents.map((session) => ({
       id: session._id,
@@ -112,7 +136,7 @@ router.get("/events", isAuthenticated, async (req, res) => {
     // 3. Fusionner les deux
     const allEvents = [...formattedGoogleEvents, ...formattedLocalEvents];
 
-    console.log("sessions = ", allEvents);
+    // console.log("sessions = ", allEvents);
 
     res.json(allEvents);
   } catch (error) {
