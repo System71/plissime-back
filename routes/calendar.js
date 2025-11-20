@@ -6,8 +6,7 @@ const { google } = require("googleapis");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const Session = require("../models/Session");
 
-
-
+//Fonction qui check si besoin de refresh le token
 async function refreshTokenIfNeeded(user) {
   const oauth2Client = createOAuthClient();
 
@@ -43,8 +42,6 @@ async function refreshTokenIfNeeded(user) {
     throw new Error("Google token refresh failed");
   }
 }
-
-
 
 // Route pour rediriger l'utilisateur vers Google
 router.get("/auth/google/init", isAuthenticated, async (req, res) => {
