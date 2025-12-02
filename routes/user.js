@@ -119,6 +119,8 @@ router.post("/user/login", async (req, res) => {
       _id: userToSearch.id,
       token: userToSearch.token,
       email: userToSearch.email,
+      sub: userToSearch.subscription.status,
+      firstName: userToSearch.firstName,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

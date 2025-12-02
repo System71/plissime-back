@@ -12,6 +12,9 @@ const User = mongoose.model("User", {
   siret: String,
   certification: String,
   subscription: {
+    id: String,
+    status: String,
+    stripeCustomerId: { type: String, default: null },
     category: { type: String, enum: ["basic", "premium"], default: "basic" },
     type: {
       type: String,
@@ -19,6 +22,8 @@ const User = mongoose.model("User", {
       default: null,
     },
     lastPayment: Date,
+    periodStart: Number,
+    periodEnd: Number,
     bills: [
       {
         type: mongoose.Schema.Types.ObjectId,

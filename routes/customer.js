@@ -11,11 +11,29 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // const sgMail = require("../configuration/mailer_backup.js");
 const sendEmail = require("../configuration/mailer");
 
-// ========== DISPLAY COACH CUSTOMERS ==========
-router.get("/mycustomers", isAuthenticated, async (req, res) => {
+// ========== DISPLAY COACH ACTIVES CUSTOMERS ==========
+router.get("/mycustomers/active", isAuthenticated, async (req, res) => {
   try {
     const { name } = req.query;
-    const filter = { coachs: { $in: [req.user] } };
+    console.log("name=", name);
+    const filter = { "coachs.id": req.user, "coachs.isActive": true };
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
+    }
+    console.log("filter=", filter);
+    const myCustomers = await Customer.find(filter).sort({ name: 1 });
+    console.log("my customers", myCustomers);
+    res.status(201).json(myCustomers);
+  } catch (error) {
+    res.status(500).send("Erreur d'authentification !");
+  }
+});
+
+// ========== DISPLAY COACH INACTIVES CUSTOMERS ==========
+router.get("/mycustomers/inactive", isAuthenticated, async (req, res) => {
+  try {
+    const { name } = req.query;
+    const filter = { "coachs.id": req.user, "coachs.isActive": false };
     if (name) {
       filter.name = { $regex: name, $options: "i" };
     }
@@ -30,8 +48,15 @@ router.get("/mycustomers", isAuthenticated, async (req, res) => {
 // ========== DISPLAY ONE CUSTOMER ==========
 router.get("/find/customer/:id", isAuthenticated, async (req, res) => {
   try {
-    const customerTofind = await Customer.findById(req.params.id);
-    res.status(200).json(customerTofind);
+    const customerToFind = await Customer.findById(req.params.id);
+    if (!customerToFind) {
+      return res.status(404).json({ message: "Customer non trouvé" });
+    }
+    const coachInfo = customerToFind.coachs.find(
+      (coach) => coach.id.toString() === req.user.id.toString()
+    );
+    console.log(coachInfo);
+    res.status(200).json({ customerToFind, coachInfo });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -57,12 +82,35 @@ router.get("/customer/informations", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== MODIFY CUSTOMER INFORMATIONS BY COACH ==========
+router.put("/mycustomer/informations", isAuthenticated, async (req, res) => {
+  try {
+    const { email, date, isActive, comment } = req.body;
+    console.log("req.body", req.body);
+
+    const customerToModify = await Customer.findOneAndUpdate(
+      { email: email, "coachs.id": req.user },
+      {
+        $set: {
+          "coachs.$.date": date,
+          "coachs.$.comment": comment,
+          "coachs.$.isActive": isActive,
+        },
+      },
+      { new: true }
+    );
+    console.log("customer", customerToModify);
+    res.status(201).json({ message: "Customer modifié!" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
 // ========== MODIFY CUSTOMER INFORMATIONS ==========
 router.put("/customer/informations", isAuthenticated, async (req, res) => {
   try {
     const {
       email,
-      password,
       name,
       firstName,
       address,
@@ -84,7 +132,6 @@ router.put("/customer/informations", isAuthenticated, async (req, res) => {
       req.customer,
       {
         email: email,
-        password: password,
         name: name,
         firstName: firstName,
         address: address,
@@ -117,7 +164,11 @@ router.put("/customer/add", isAuthenticated, async (req, res) => {
 
     const customerToAdd = await Customer.findOne({ email: email });
 
-    customerToAdd.coachs.push(req.user._id);
+    customerToAdd.coachs.push({
+      id: req.user._id,
+      date: new Date(),
+      isActive: true,
+    });
 
     await customerToAdd.save();
 
@@ -152,7 +203,7 @@ router.post("/customer/presignup", isAuthenticated, async (req, res) => {
       firstName: firstName,
       phone: phone,
       token: token,
-      coachs: [req.user],
+      coachs: [{ id: req.user, date: new Date(), isActive: true }],
     });
 
     await newCustomer.save();
@@ -381,6 +432,65 @@ router.post("/customer/login", async (req, res) => {
       token: customerToSearch.token,
       email: customerToSearch.email,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== DISPLAY NUMBER OF NEW CUSTOMERS ==========
+router.get("/mycustomers/new", isAuthenticated, async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfPrevMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23,
+      59,
+      59
+    );
+
+    const month = await Customer.aggregate([
+      { $unwind: "$coachs" },
+      {
+        $match: {
+          "coachs.id": req.user._id,
+          "coachs.date": { $gte: startOfMonth, $lte: now },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          newCustomersMonth: { $sum: 1 },
+        },
+      },
+    ]);
+    const newCustomersMonth = month[0]?.newCustomersMonth || 0;
+    console.log("new", newCustomersMonth);
+
+    const prevMonth = await Customer.aggregate([
+      { $unwind: "$coachs" },
+      {
+        $match: {
+          "coachs.id": req.user._id,
+          "coachs.date": { $gte: startOfPrevMonth, $lte: endOfPrevMonth },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          newCustomersPrevMonth: { $sum: 1 },
+        },
+      },
+    ]);
+    const newCustomersPrevMonth = prevMonth[0]?.newCustomersPrevMonth || 0;
+    console.log("prev", newCustomersPrevMonth);
+
+    const diffPrevMonth = newCustomersMonth - newCustomersPrevMonth;
+
+    res.status(200).json({ newCustomersMonth, diffPrevMonth });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -20,17 +20,13 @@ const Customer = mongoose.model("Customer", {
   goals: String,
   coachs: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-  ],
-  comments: [
-    {
       id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
-      content: String,
+      date: Date,
+      comment: String,
+      isActive: Boolean,
     },
   ],
   //planning infos
