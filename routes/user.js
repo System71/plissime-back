@@ -8,6 +8,7 @@ const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
 // const convertToBase64 = require("../utils/converToBase64");
 const isAuthenticated = require("../middlewares/isAuthenticated");
+const checkSubscription = require("../middlewares/checkSubscription");
 
 // ========== SIGNUP ==========
 router.post("/user/signup", fileUpload(), async (req, res) => {
@@ -156,7 +157,7 @@ router.get("/user/stripe-onboarding/:userId", async (req, res) => {
 });
 
 // ========== DISPLAY USER INFORMATIONS ==========
-router.get("/user/informations", isAuthenticated, async (req, res) => {
+router.get("/user/informations", checkSubscription, async (req, res) => {
   try {
     const user = await User.findById(req.user);
     res.status(200).json(user);
@@ -166,7 +167,7 @@ router.get("/user/informations", isAuthenticated, async (req, res) => {
 });
 
 // ========== MODIFY USER INFORMATIONS ==========
-router.put("/user/informations", isAuthenticated, async (req, res) => {
+router.put("/user/informations", checkSubscription, async (req, res) => {
   try {
     const {
       email,

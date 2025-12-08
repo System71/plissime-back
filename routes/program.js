@@ -2,11 +2,12 @@ const express = require("express");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
 const Program = require("../models/Program");
+const checkSubscription = require("../middlewares/checkSubscription");
 
 //__________________________________ PROGRAMS __________________________________
 
 // ========== CREATE PROGRAM ==========
-router.post("/program/add", isAuthenticated, async (req, res) => {
+router.post("/program/add", checkSubscription, async (req, res) => {
   try {
     const { title, duration, notes, sessions } = req.body;
 
@@ -27,7 +28,7 @@ router.post("/program/add", isAuthenticated, async (req, res) => {
 });
 
 // ========== MODIFY PROGRAM ==========
-router.put("/program/modify/:id", isAuthenticated, async (req, res) => {
+router.put("/program/modify/:id", checkSubscription, async (req, res) => {
   try {
     const { title, duration, notes, sessions } = req.body;
 
@@ -47,7 +48,7 @@ router.put("/program/modify/:id", isAuthenticated, async (req, res) => {
 });
 
 // ========== DELETE PROGRAM ==========
-router.delete("/program/:id", isAuthenticated, async (req, res) => {
+router.delete("/program/:id", checkSubscription, async (req, res) => {
   try {
     const programToDelete = await Program.findByIdAndDelete(req.params.id);
 
@@ -58,7 +59,7 @@ router.delete("/program/:id", isAuthenticated, async (req, res) => {
 });
 
 // ========== DISPLAY COACH PROGRAMS ==========
-router.get("/programs", isAuthenticated, async (req, res) => {
+router.get("/programs", checkSubscription, async (req, res) => {
   try {
     const filter = { coach: req.user._id };
 
@@ -74,7 +75,7 @@ router.get("/programs", isAuthenticated, async (req, res) => {
 });
 
 // ========== DISPLAY ONE PROGRAM ==========
-router.get("/programs/:id", isAuthenticated, async (req, res) => {
+router.get("/programs/:id", checkSubscription, async (req, res) => {
   try {
     let programToFind = await Program.findById(req.params.id).populate("coach");
 
@@ -87,7 +88,7 @@ router.get("/programs/:id", isAuthenticated, async (req, res) => {
 // ========== ADD CUSTOMER TO A PROGRAM ==========
 router.put(
   "/program/:programid/customer/add/:customerid",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const programToModify = await Program.findById(req.params.programid);
@@ -156,7 +157,7 @@ router.get(
 //__________________________________ SESSIONS __________________________________
 
 // ========== ADD NEW SESSION ==========
-router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
+router.post("/program/:id/session/add", checkSubscription, async (req, res) => {
   try {
     const programToModify = await Program.findByIdAndUpdate(
       req.params.id,
@@ -178,7 +179,7 @@ router.post("/program/:id/session/add", isAuthenticated, async (req, res) => {
 // ========== DISPLAY ONE SESSION ==========
 router.get(
   "/program/:programid/session/:sessionid",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const programToFind = await Program.findById(
@@ -194,7 +195,7 @@ router.get(
 // ========== DELETE SESSION ==========
 router.delete(
   "/program/:programid/session/:sessionid",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const programToModify = await Program.findById(req.params.programid);
@@ -277,7 +278,7 @@ router.put(
 // ========== ADD NEW EXERCISE ==========
 router.post(
   "/program/:programid/session/:sessionid/exercise/add",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const {
@@ -314,7 +315,7 @@ router.post(
 // ========== DISPLAY ONE EXERCISE ==========
 router.get(
   "/program/:programid/session/:sessionid/exercise/:exerciseid",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const programToFind = await Program.findById(
@@ -335,7 +336,7 @@ router.get(
 // ========== MODIFY EXERCISE ==========
 router.put(
   "/program/:programid/session/:sessionid/exercise/modify/:exerciseid",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const {
@@ -379,7 +380,7 @@ router.put(
 // ========== DELETE EXERCISE ==========
 router.delete(
   "/program/:programid/session/:sessionid/exercise/:exerciseid",
-  isAuthenticated,
+  checkSubscription,
   async (req, res) => {
     try {
       const programToModify = await Program.findById(

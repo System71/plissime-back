@@ -5,6 +5,7 @@ const { SCOPES, createOAuthClient } = require("../middlewares/auth");
 const { google } = require("googleapis");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const Session = require("../models/Session");
+const checkSubscription = require("../middlewares/checkSubscription");
 
 //Fonction qui check si besoin de refresh le token
 async function refreshTokenIfNeeded(user) {
@@ -16,7 +17,8 @@ async function refreshTokenIfNeeded(user) {
     expiry_date: user.oauth.expiryDate,
   });
 
-  const isExpired = !user.oauth.expiryDate || user.oauth.expiryDate <= Date.now();
+  const isExpired =
+    !user.oauth.expiryDate || user.oauth.expiryDate <= Date.now();
 
   if (!isExpired) {
     return oauth2Client; // rien à faire, token encore valide
@@ -30,7 +32,9 @@ async function refreshTokenIfNeeded(user) {
     await User.findByIdAndUpdate(user._id, {
       "oauth.accessToken": credentials.access_token,
       "oauth.expiryDate": credentials.expiry_date,
-      ...(credentials.refresh_token && { "oauth.refreshToken": credentials.refresh_token }),
+      ...(credentials.refresh_token && {
+        "oauth.refreshToken": credentials.refresh_token,
+      }),
     });
 
     oauth2Client.setCredentials(credentials);
@@ -44,7 +48,7 @@ async function refreshTokenIfNeeded(user) {
 }
 
 // Route pour rediriger l'utilisateur vers Google
-router.get("/auth/google/init", isAuthenticated, async (req, res) => {
+router.get("/auth/google/init", checkSubscription, async (req, res) => {
   const userId = req.user._id;
   const oauth2Client = createOAuthClient();
 
@@ -81,7 +85,7 @@ router.get("/auth/google/callback", async (req, res) => {
   }
 });
 
-router.get("/events", isAuthenticated, async (req, res) => {
+router.get("/events", checkSubscription, async (req, res) => {
   const coach = await User.findById(req.user);
 
   if (!coach || !coach.oauth.accessToken) {
@@ -144,7 +148,7 @@ router.get("/events", isAuthenticated, async (req, res) => {
   }
 });
 
-router.get("/status", isAuthenticated, async (req, res) => {
+router.get("/status", checkSubscription, async (req, res) => {
   const coach = await User.findById(req.user);
 
   if (!coach) {

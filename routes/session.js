@@ -125,7 +125,6 @@ router.get("/sessions/topaid", isAuthenticated, async (req, res) => {
         session.customer?.name?.match(regex)
       );
     }
-    console.log("session to paid=", sessionsToPaid);
     res.status(200).json(sessionsToPaid);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -283,8 +282,6 @@ router.get("/sessions/customer/topaid", isAuthenticated, async (req, res) => {
       .sort({ start: -1 })
       .populate("coach")
       .populate("customer");
-
-    console.log("Session à payer=", sessionsToPaid);
 
     res.status(200).json(sessionsToPaid);
   } catch (error) {

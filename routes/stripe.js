@@ -72,44 +72,94 @@ router.post("/create-payment-intent", isAuthenticated, async (req, res) => {
   }
 });
 
-// Subscription for coachs
-router.post("/subscription/checkout", isAuthenticated, async (req, res) => {
-  const { priceId } = req.body;
-  const coachId = req.user;
+// Annual subscription for coachs
+router.post(
+  "/subscription/checkout/annual",
+  isAuthenticated,
+  async (req, res) => {
+    const priceId = process.env.ANNUAL_SUB;
+    const coachId = req.user;
 
-  try {
-    const coach = await User.findById(coachId);
+    try {
+      const coach = await User.findById(coachId);
 
-    // Create customer account STRIPE for coachs if doesn't exist
-    let customerId = coach.subscription.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: coach.email,
-        metadata: { coachId: coach._id.toString() },
-      });
-      customerId = customer.id;
-      coach.subscription.stripeCustomerId = customerId;
-      await coach.save();
-    }
+      // Create customer account STRIPE for coachs if doesn't exist
+      let customerId = coach.subscription.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: coach.email,
+          metadata: { coachId: coach._id.toString() },
+        });
+        customerId = customer.id;
+        coach.subscription.stripeCustomerId = customerId;
+        await coach.save();
+      }
 
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: {
-        metadata: {
-          coachId: coach._id.toString(),
+      // Create checkout session
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        subscription_data: {
+          metadata: {
+            coachId: coach._id.toString(),
+          },
         },
-      },
-      success_url: "https://ton-front.com/abonnement/success",
-      cancel_url: "https://ton-front.com/abonnement/cancel",
-    });
-    res.json({ url: session.url });
-  } catch (error) {
-    console.error("Erreur création session:", error);
-    res.status(500).json({ error: error.message });
+        //voir pour faire des pages adéquates
+        success_url: process.env.FRONTEND_URL,
+        cancel_url: process.env.FRONTEND_URL,
+      });
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Erreur création session:", error);
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
+
+// Mensual subscription for coachs
+router.post(
+  "/subscription/checkout/mensual",
+  isAuthenticated,
+  async (req, res) => {
+    const priceId = process.env.MENSUAL_SUB;
+    const coachId = req.user;
+
+    try {
+      const coach = await User.findById(coachId);
+
+      // Create customer account STRIPE for coachs if doesn't exist
+      let customerId = coach.subscription.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: coach.email,
+          metadata: { coachId: coach._id.toString() },
+        });
+        customerId = customer.id;
+        coach.subscription.stripeCustomerId = customerId;
+        await coach.save();
+      }
+
+      // Create checkout session
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        subscription_data: {
+          metadata: {
+            coachId: coach._id.toString(),
+          },
+        },
+        //voir pour faire des pages adéquates
+        success_url: process.env.FRONTEND_URL,
+        cancel_url: process.env.FRONTEND_URL,
+      });
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Erreur création session:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 module.exports = router;

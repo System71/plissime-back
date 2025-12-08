@@ -45,7 +45,6 @@ router.post(
             },
             { new: true }
           );
-          console.log("Session modifiée");
           response.status(201).json({ message: "Session modifiée!" });
         } catch (error) {
           response.status(500).json({ message: error.message });
@@ -61,7 +60,6 @@ router.post(
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
         const sub = event.data.object;
-        console.log("sub=", sub);
         const id = sub.id;
         const status = sub.status;
         const periodStart = sub.items.data[0].current_period_start;
@@ -78,7 +76,6 @@ router.post(
               "subscription.periodEnd": periodEnd,
             },
           });
-          console.log("Coach modifiée avec nouvelles informations abonnement");
           response.status(201).json({
             message: "Coach modifiée avec nouvelles informations abonnement",
           });

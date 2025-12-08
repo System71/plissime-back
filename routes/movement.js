@@ -2,9 +2,10 @@ const express = require("express");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
 const Movement = require("../models/Movement");
+const checkSubscription = require("../middlewares/checkSubscription");
 
 // ========== GET ALL MOVEMENTS ==========
-router.get("/movements", isAuthenticated, async (req, res) => {
+router.get("/movements", checkSubscription, async (req, res) => {
   try {
     const movements = await Movement.find();
     res.status(201).json(movements);
@@ -14,7 +15,7 @@ router.get("/movements", isAuthenticated, async (req, res) => {
 });
 
 // ========== CREATE MOVEMENT ==========
-router.post("/movement/add", isAuthenticated, async (req, res) => {
+router.post("/movement/add", checkSubscription, async (req, res) => {
   try {
     const { title, imageUrl } = req.body;
 

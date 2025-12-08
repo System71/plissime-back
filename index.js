@@ -15,6 +15,7 @@ const programRoutes = require("./routes/program");
 const movementRoutes = require("./routes/movement");
 const stripeRoutes = require("./routes/stripe");
 const stripeWebhooks = require("./routes/stripeWebhooks");
+const isAuthenticated = require("./middlewares/isAuthenticated");
 
 //Stripe WEBHOOKS
 app.use(stripeWebhooks);
@@ -37,6 +38,23 @@ app.use(movementRoutes);
 
 app.get("/", (req, res) => {
   res.status(400).send("coucou");
+});
+
+app.get("/informations", isAuthenticated, async (req, res) => {
+  try {
+    if (req.user) {
+      const sub = req.user.subscription.status;
+      const firstName = req.user.firstName;
+      res.status(200).json({ sub, firstName });
+    } else if (req.customer) {
+      const firstName = req.user.firstName;
+      res.status(200).json({ firstName });
+    } else {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+  } catch (error) {
+    res.status(500).send("Erreur d'authentification !");
+  }
 });
 
 app.all("*", (req, res) => {

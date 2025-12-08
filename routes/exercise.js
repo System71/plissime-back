@@ -1,9 +1,10 @@
 const express = require("express");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
+const checkSubscription = require("../middlewares/checkSubscription");
 
 // ========== CREATE EXERCISE ==========
-router.post("/exercise/add", isAuthenticated, async (req, res) => {
+router.post("/exercise/add", checkSubscription, async (req, res) => {
   try {
     const { category, series, repetitions, weight, duration, restTime, notes } =
       req.body;

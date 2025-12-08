@@ -15,14 +15,11 @@ const sendEmail = require("../configuration/mailer");
 router.get("/mycustomers/active", isAuthenticated, async (req, res) => {
   try {
     const { name } = req.query;
-    console.log("name=", name);
     const filter = { "coachs.id": req.user, "coachs.isActive": true };
     if (name) {
       filter.name = { $regex: name, $options: "i" };
     }
-    console.log("filter=", filter);
     const myCustomers = await Customer.find(filter).sort({ name: 1 });
-    console.log("my customers", myCustomers);
     res.status(201).json(myCustomers);
   } catch (error) {
     res.status(500).send("Erreur d'authentification !");
@@ -55,7 +52,6 @@ router.get("/find/customer/:id", isAuthenticated, async (req, res) => {
     const coachInfo = customerToFind.coachs.find(
       (coach) => coach.id.toString() === req.user.id.toString()
     );
-    console.log(coachInfo);
     res.status(200).json({ customerToFind, coachInfo });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -86,7 +82,6 @@ router.get("/customer/informations", isAuthenticated, async (req, res) => {
 router.put("/mycustomer/informations", isAuthenticated, async (req, res) => {
   try {
     const { email, date, isActive, comment } = req.body;
-    console.log("req.body", req.body);
 
     const customerToModify = await Customer.findOneAndUpdate(
       { email: email, "coachs.id": req.user },
@@ -99,7 +94,6 @@ router.put("/mycustomer/informations", isAuthenticated, async (req, res) => {
       },
       { new: true }
     );
-    console.log("customer", customerToModify);
     res.status(201).json({ message: "Customer modifié!" });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
@@ -468,7 +462,6 @@ router.get("/mycustomers/new", isAuthenticated, async (req, res) => {
       },
     ]);
     const newCustomersMonth = month[0]?.newCustomersMonth || 0;
-    console.log("new", newCustomersMonth);
 
     const prevMonth = await Customer.aggregate([
       { $unwind: "$coachs" },
@@ -486,7 +479,6 @@ router.get("/mycustomers/new", isAuthenticated, async (req, res) => {
       },
     ]);
     const newCustomersPrevMonth = prevMonth[0]?.newCustomersPrevMonth || 0;
-    console.log("prev", newCustomersPrevMonth);
 
     const diffPrevMonth = newCustomersMonth - newCustomersPrevMonth;
 

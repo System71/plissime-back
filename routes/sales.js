@@ -222,8 +222,6 @@ router.get("/sales/graph", isAuthenticated, async (req, res) => {
       };
     });
 
-    console.log("chartData", chartData);
-
     res.status(200).json({ chartData });
   } catch (error) {
     res.status(500).json({ message: error.message });
