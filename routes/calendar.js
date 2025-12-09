@@ -29,13 +29,18 @@ async function refreshTokenIfNeeded(user) {
   try {
     const { credentials } = await oauth2Client.refreshAccessToken();
 
-    await User.findByIdAndUpdate(user._id, {
-      "oauth.accessToken": credentials.access_token,
-      "oauth.expiryDate": credentials.expiry_date,
-      ...(credentials.refresh_token && {
-        "oauth.refreshToken": credentials.refresh_token,
-      }),
-    });
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        "oauth.accessToken": credentials.access_token,
+        "oauth.expiryDate": credentials.expiry_date,
+        ...(credentials.refresh_token && {
+          "oauth.refreshToken": credentials.refresh_token,
+        }),
+      },
+      { new: true }
+    );
+    deepl.com / fr / translator;
 
     oauth2Client.setCredentials(credentials);
 

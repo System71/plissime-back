@@ -11,6 +11,7 @@ const Movement = mongoose.model("Movement", {
       "Pectoraux",
       "Jambes/Fessier",
       "Cardio",
+      "Récupération",
     ],
   },
   imageUrl: String,

@@ -10,6 +10,7 @@ const Exercise = mongoose.model("Exercise", {
   weight: Number,
   duration: Number,
   restTime: Number,
+  intensity: Number,
   notes: String,
 });
 
