@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require("../models/User");
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const checkSubscription = require("../middlewares/checkSubscription");
 
 // Create connected account STRIPE for coachs
 router.post("/create-connected-account", isAuthenticated, async (req, res) => {
@@ -127,7 +128,6 @@ router.post(
 
     try {
       const coach = await User.findById(coachId);
-
       // Create customer account STRIPE for coachs if doesn't exist
       let customerId = coach.subscription.stripeCustomerId;
       if (!customerId) {
@@ -158,6 +158,24 @@ router.post(
     } catch (error) {
       console.error("Erreur création session:", error);
       res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+router.get(
+  "/stripe/invoices/:stripeId",
+  checkSubscription,
+  async (req, res) => {
+    try {
+      console.log("aaaaaaaaaaaaaaaaaaaaaaa");
+      const { stripeId } = req.params;
+
+      const invoices = await stripe.invoices.list({ customer: stripeId });
+
+      const date = invoices.data.created;
+      const formattedDate = res.status(201).json(invoices);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
   }
 );
