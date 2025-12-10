@@ -5,6 +5,24 @@ const User = require("../models/User");
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const checkSubscription = require("../middlewares/checkSubscription");
+const { format } = require("date-fns");
+
+const translateStatus = (status) => {
+  switch (status) {
+    case "draft":
+      return "Brouillon";
+    case "open":
+      return "Ouverte";
+    case "paid":
+      return "Payée";
+    case "uncollectible":
+      return "Irrécouvrable";
+    case "void":
+      return "Annulée";
+    default:
+      return status; // au cas où Stripe ajoute un nouveau statut
+  }
+};
 
 // Create connected account STRIPE for coachs
 router.post("/create-connected-account", isAuthenticated, async (req, res) => {
@@ -167,13 +185,18 @@ router.get(
   checkSubscription,
   async (req, res) => {
     try {
-      console.log("aaaaaaaaaaaaaaaaaaaaaaa");
       const { stripeId } = req.params;
 
       const invoices = await stripe.invoices.list({ customer: stripeId });
 
-      const date = invoices.data.created;
-      const formattedDate = res.status(201).json(invoices);
+      const formattedInvoices = invoices.data.map((invoice) => ({
+        date: format(new Date(invoice.created * 1000), "dd/MM/yyyy"),
+        title: invoice.lines.data[0].description,
+        status: translateStatus(invoice.status),
+        pdf: invoice.invoice_pdf,
+      }));
+
+      res.status(201).json(formattedInvoices);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
