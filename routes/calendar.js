@@ -40,7 +40,6 @@ async function refreshTokenIfNeeded(user) {
       },
       { new: true }
     );
-    deepl.com / fr / translator;
 
     oauth2Client.setCredentials(credentials);
 

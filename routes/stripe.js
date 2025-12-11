@@ -203,4 +203,31 @@ router.get(
   }
 );
 
+router.get(
+  "/stripe/payment-method/:stripeId",
+  checkSubscription,
+  async (req, res) => {
+    try {
+      const { stripeId } = req.params;
+
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: stripeId,
+        type: "card",
+      });
+
+      const formattedPaymentMethod = {
+        type: paymentMethods.data[0].card.brand,
+        numbers: paymentMethods.data[0].card.last4,
+        exp_month: paymentMethods.data[0].card.exp_month,
+        exp_year: paymentMethods.data[0].card.exp_year,
+      };
+
+      console.log("payment method=", formattedPaymentMethod);
+      res.status(201).json(formattedPaymentMethod);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 module.exports = router;
