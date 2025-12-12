@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const User = mongoose.model("User", {
-  isActive: { type: Boolean, default: false },
+  signupStep: String,
   email: String,
   name: String,
   firstName: String,

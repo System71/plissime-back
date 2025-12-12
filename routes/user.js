@@ -10,16 +10,48 @@ const uid2 = require("uid2");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const checkSubscription = require("../middlewares/checkSubscription");
 
-// ========== SIGNUP ==========
-router.post("/user/signup", fileUpload(), async (req, res) => {
+// ========== SIGNUP NEW ==========
+router.post("/user/signup/new", async (req, res) => {
   try {
+    console.log("new signup");
     const password = req.body.password;
     const salt = uid2(16);
     const hash = SHA256(password + salt).toString(encBase64);
     const token = uid2(16);
 
+    const { email, signupStep } = req.body;
+
+    //Verification if email is provided
+    if (!email) {
+      return res.status(400).json({ message: "Email is missing" });
+    }
+
+    //Verification if email doesn't exist
+    const checkMail = await User.findOne({ email: email });
+    if (checkMail) {
+      return res.status(400).json({ message: "Email already used" });
+    }
+
+    const newUser = new User({
+      signupStep: signupStep,
+      email: email,
+      token: token,
+      hash: hash,
+      salt: salt,
+    });
+
+    await newUser.save();
+
+    res.status(200).json(newUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== SIGNUP FINISH ==========
+router.put("/user/signup/finish", async (req, res) => {
+  try {
     const {
-      email,
       name,
       firstName,
       address,
@@ -30,70 +62,31 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
       siret,
       certification,
       subscription,
+      token,
+      signupStep,
     } = req.body;
 
-    //Verification if email is provided
-    if (!email) {
-      return res.status(400).json({ message: "Email is missing" });
-    }
-
-    //Verification if email doesn't exist
-
-    const checkMail = await User.findOne({ email: email });
-
-    if (checkMail) {
-      return res.status(400).json({ message: "Email already used" });
-    }
-
-    const newUser = new User({
-      email: email,
-      name: name,
-      firstName: firstName,
-      address: address,
-      zip: zip,
-      city: city,
-      phone: phone,
-      activity: activity,
-      siret: siret,
-      certification: certification,
-      //planning infos
-      subscription: subscription,
-      token: token,
-      hash: hash,
-      salt: salt,
-    });
-
-    //Export avatar to Cloudinary a faire
-
-    // if (req.files) {
-    //   const avatarToUpload = req.files.avatar;
-
-    //   const avatar = await cloudinary.uploader.upload(
-    //     convertToBase64(avatarToUpload),
-    //     {
-    //       public_id: `marvel/avatar/${newUser.id}`,
-    //       overwrite: true,
-    //     }
-    //   );
-
-    //   newUser.account.avatar = avatar;
-    // }
-
-    // const account = await stripe.accounts.create({
-    //   type: "express",
-    //   country: "FR",
-    //   email: email,
-    // });
-
-    // console.log("account=", account);
-
-    // newUser.stripe_id = account.id;
-
-    await newUser.save();
-
-    res.status(200).json(newUser);
+    const userToModify = await User.findOneAndUpdate(
+      { token: token },
+      {
+        signupStep: signupStep,
+        name: name,
+        firstName: firstName,
+        address: address,
+        zip: zip,
+        city: city,
+        phone: phone,
+        activity: activity,
+        siret: siret,
+        certification: certification,
+        subscription: subscription,
+      },
+      { new: true }
+    );
+    console.log("User complété=", userToModify);
+    res.status(201).json({ message: "User complété" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 
