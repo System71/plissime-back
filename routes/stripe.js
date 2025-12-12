@@ -230,4 +230,18 @@ router.get(
   }
 );
 
+// backend (Node)
+router.post("/billing/setup-intent", async (req, res) => {
+  const { customerId } = req.body;
+
+  const setupIntent = await stripe.setupIntents.create({
+    customer: customerId,
+    payment_method_types: ["card"],
+  });
+
+  res.status(201).json({
+    clientSecret: setupIntent.client_secret,
+  });
+});
+
 module.exports = router;
