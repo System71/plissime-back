@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const Customer = mongoose.model("Customer", {
   isActive: { type: Boolean, default: false },
+  signupStep: String,
   email: String,
   name: String,
   firstName: String,

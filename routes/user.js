@@ -13,11 +13,7 @@ const checkSubscription = require("../middlewares/checkSubscription");
 // ========== SIGNUP NEW ==========
 router.post("/user/signup/new", async (req, res) => {
   try {
-    console.log("new signup");
     const password = req.body.password;
-    const salt = uid2(16);
-    const hash = SHA256(password + salt).toString(encBase64);
-    const token = uid2(16);
 
     const { email, signupStep } = req.body;
 
@@ -27,22 +23,44 @@ router.post("/user/signup/new", async (req, res) => {
     }
 
     //Verification if email doesn't exist
-    const checkMail = await User.findOne({ email: email });
-    if (checkMail) {
-      return res.status(400).json({ message: "Email already used" });
+    const userToSearch = await User.findOne({ email: email });
+    if (userToSearch && userToSearch.signupStep != 2) {
+      const salt = userToSearch.salt;
+      const hash = SHA256(password + salt).toString(encBase64);
+      const userHash = userToSearch.hash;
+
+      if (hash !== userHash) {
+        return res.status(401).json({
+          message:
+            "Inscription non terminée avec cet email. Veuillez saisir le mot de passe utilisé initialement pour finir votre inscription.",
+        });
+      }
+      res.status(200).json({
+        userToSearch: userToSearch,
+        message:
+          "Nous sommes heureux de vous revoir. Vous pouvez désormais finaliser votre inscription!",
+      });
+    } else if (!userToSearch) {
+      const salt = uid2(16);
+      const hash = SHA256(password + salt).toString(encBase64);
+      const token = uid2(16);
+      const newUser = new User({
+        isActive: false,
+        signupStep: signupStep,
+        email: email,
+        token: token,
+        hash: hash,
+        salt: salt,
+      });
+
+      await newUser.save();
+
+      res.status(200).json({ newUser: newUser });
+    } else {
+      return res.status(401).json({
+        message: "Vous êtes déjà inscrit avec ces mêmes identifiants.",
+      });
     }
-
-    const newUser = new User({
-      signupStep: signupStep,
-      email: email,
-      token: token,
-      hash: hash,
-      salt: salt,
-    });
-
-    await newUser.save();
-
-    res.status(200).json(newUser);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -61,7 +79,6 @@ router.put("/user/signup/finish", async (req, res) => {
       activity,
       siret,
       certification,
-      subscription,
       token,
       signupStep,
     } = req.body;
@@ -69,6 +86,7 @@ router.put("/user/signup/finish", async (req, res) => {
     const userToModify = await User.findOneAndUpdate(
       { token: token },
       {
+        isActive: true,
         signupStep: signupStep,
         name: name,
         firstName: firstName,
@@ -79,11 +97,9 @@ router.put("/user/signup/finish", async (req, res) => {
         activity: activity,
         siret: siret,
         certification: certification,
-        subscription: subscription,
       },
       { new: true }
     );
-    console.log("User complété=", userToModify);
     res.status(201).json({ message: "User complété" });
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
@@ -107,6 +123,10 @@ router.post("/user/login", async (req, res) => {
 
     if (hash !== userHash) {
       return res.status(401).json({ message: "Email or password invalid" });
+    }
+
+    if (userToSearch.signupStep != 2) {
+      return res.status(401).json({ message: "Inscription non terminée" });
     }
 
     res.status(200).json({

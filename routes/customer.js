@@ -303,34 +303,12 @@ router.put("/customer/activation/:token", async (req, res) => {
   }
 });
 
-// ========== SIGNUP ==========
-router.post("/customer/signup", fileUpload(), async (req, res) => {
+// ========== SIGNUP NEW ==========
+router.post("/customer/signup/new", async (req, res) => {
   try {
     const password = req.body.password;
-    const salt = uid2(16);
-    const hash = SHA256(password + salt).toString(encBase64);
-    const token = uid2(16);
 
-    const {
-      email,
-      name,
-      firstName,
-      address,
-      zip,
-      city,
-      phone,
-      birthday,
-      occupation,
-      activity,
-      weight,
-      size,
-      workingTime,
-      availibility,
-      sportBackground,
-      healthProblem,
-      goals,
-      coachs,
-    } = req.body;
+    const { email, signupStep } = req.body;
 
     //Verification if email is provided
     if (!email) {
@@ -338,67 +316,80 @@ router.post("/customer/signup", fileUpload(), async (req, res) => {
     }
 
     //Verification if email doesn't exist
+    const customerToSearch = await Customer.findOne({ email: email });
+    if (customerToSearch && customerToSearch.signupStep != 1) {
+      const salt = customerToSearch.salt;
+      const hash = SHA256(password + salt).toString(encBase64);
+      const customerHash = customerToSearch.hash;
 
-    const checkMail = await Customer.findOne({ email: email });
+      if (hash !== customerHash) {
+        return res.status(401).json({
+          message:
+            "Inscription non terminée avec cet email. Veuillez saisir le mot de passe utilisé initialement pour finir votre inscription.",
+        });
+      }
+      res.status(200).json({
+        customerToSearch: customerToSearch,
+        message:
+          "Nous sommes heureux de vous revoir. Vous pouvez désormais finaliser votre inscription!",
+      });
+    } else if (!customerToSearch) {
+      const salt = uid2(16);
+      const hash = SHA256(password + salt).toString(encBase64);
+      const token = uid2(16);
+      const newCustomer = new Customer({
+        signupStep: signupStep,
+        email: email,
+        token: token,
+        hash: hash,
+        salt: salt,
+      });
 
-    if (checkMail) {
-      return res.status(400).json({ message: "Email already used" });
+      await newCustomer.save();
+
+      res.status(200).json({ newCustomer: newCustomer });
+    } else {
+      return res.status(401).json({
+        message: "Vous êtes déjà inscrit avec ces mêmes identifiants.",
+      });
     }
-
-    const newCustomer = new Customer({
-      isActive: true,
-      email: email,
-      name: name,
-      firstName: firstName,
-      address: address,
-      zip: zip,
-      city: city,
-      phone: phone,
-      birthday: birthday,
-      occupation: occupation,
-      activity: activity,
-      weight: weight,
-      size: size,
-      workingTime: workingTime,
-      availibility: availibility,
-      sportBackground: sportBackground,
-      healthProblem: healthProblem,
-      goals: goals,
-      coachs: coachs,
-      //planning infos
-      token: token,
-      hash: hash,
-      salt: salt,
-    });
-
-    //Export avatar to Cloudinary a faire
-
-    // if (req.files) {
-    //   const avatarToUpload = req.files.avatar;
-
-    //   const avatar = await cloudinary.uploader.upload(
-    //     convertToBase64(avatarToUpload),
-    //     {
-    //       public_id: `marvel/avatar/${newUser.id}`,
-    //       overwrite: true,
-    //     }
-    //   );
-
-    //   newUser.account.avatar = avatar;
-    // }
-
-    await newCustomer.save();
-
-    res.status(200).json({
-      _id: newCustomer.id,
-      token: newCustomer.token,
-      account: {
-        email: newCustomer.email,
-        // Voir pour confirmé l'avatar
-      },
-    });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== SIGNUP FINISH ==========
+router.put("/customer/signup/finish", async (req, res) => {
+  try {
+    const {
+      name,
+      firstName,
+      address,
+      zip,
+      city,
+      phone,
+      activity,
+      token,
+      signupStep,
+    } = req.body;
+
+    const customerToModify = await Customer.findOneAndUpdate(
+      { token: token },
+      {
+        signupStep: signupStep,
+        name: name,
+        firstName: firstName,
+        address: address,
+        zip: zip,
+        city: city,
+        phone: phone,
+        activity: activity,
+      },
+      { new: true }
+    );
+    res.status(201).json({ message: "Customer complété" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 
