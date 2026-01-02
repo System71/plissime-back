@@ -305,4 +305,51 @@ router.get("/sessions/customer/paid", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== DISPLAY CUSTOMER SESSIONS TO PAID (COACH DIPLAY) ==========
+router.get(
+  "/sessions/topaid/customer/:id",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const filter = {
+        coach: req.user,
+        customer: req.params.id,
+        state: "À payer",
+      };
+
+      const customerSessions = await Session.find(filter).sort({ start: -1 });
+
+      res.status(200).json(customerSessions);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// ========== DISPLAY CUSTOMER SESSIONS TO PAID (COACH DIPLAY) ==========
+router.get(
+  "/sessions/upcoming/customer/:id",
+  isAuthenticated,
+  async (req, res) => {
+    const now = new Date();
+    // const tomorrow = new Date(
+    //   Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+    // );
+    try {
+      const filter = {
+        customer: req.params.id,
+        state: "Confirmée",
+        // start: { $gte: tomorrow },
+        start: { $gte: now },
+      };
+
+      const upcomingSessions = await Session.find(filter);
+      console.log("upcomingSessions=", upcomingSessions);
+      res.status(201).json(upcomingSessions);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 module.exports = router;
