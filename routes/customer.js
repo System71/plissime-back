@@ -271,6 +271,8 @@ router.put("/customer/activation/:token", async (req, res) => {
       {
         isActive: true,
         email: email,
+        hash: hash,
+        salt: salt,
         name: name,
         firstName: firstName,
         address: address,
