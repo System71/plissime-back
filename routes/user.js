@@ -223,9 +223,9 @@ router.put("/user/informations", checkSubscription, async (req, res) => {
 router.get("/mycoachs", isAuthenticated, async (req, res) => {
   try {
     const customer = await Customer.findById(req.customer._id).populate(
-      "coachs"
+      "coachs.id"
     );
-
+    console.log("customer=", customer);
     res.status(200).json(customer.coachs);
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
