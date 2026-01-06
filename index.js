@@ -48,7 +48,7 @@ app.get("/informations", isAuthenticated, async (req, res) => {
       const stripeId = req.user.subscription.stripeCustomerId;
       res.status(200).json({ sub, firstName, stripeId });
     } else if (req.customer) {
-      const firstName = req.user.firstName;
+      const firstName = req.customer.firstName;
       res.status(200).json({ firstName });
     } else {
       return res.status(401).json({ error: "Unauthorized" });
