@@ -340,6 +340,7 @@ router.post("/customer/signup/new", async (req, res) => {
       const hash = SHA256(password + salt).toString(encBase64);
       const token = uid2(16);
       const newCustomer = new Customer({
+        isActive: false,
         signupStep: signupStep,
         email: email,
         token: token,
@@ -378,6 +379,7 @@ router.put("/customer/signup/finish", async (req, res) => {
     const customerToModify = await Customer.findOneAndUpdate(
       { token: token },
       {
+        isActive: true,
         signupStep: signupStep,
         name: name,
         firstName: firstName,
