@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
 
 const Subscription = mongoose.model("Subscription", {
+  statut: Boolean,
   title: String,
   date: Date,
-  sessionNumber: Number,
+  sessionUsed: Number,
+  sessionInitial: Number,
   sessionPrice: Number,
+  isPaid: Boolean,
   coach: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

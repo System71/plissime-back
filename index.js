@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 
 //Routes
+const subscriptionRoutes = require("./routes/subscription");
 const userRoutes = require("./routes/user");
 const customerRoutes = require("./routes/customer");
 const sessionRoutes = require("./routes/session");
@@ -28,6 +29,7 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI);
 
 app.use(stripeRoutes);
+app.use(subscriptionRoutes);
 app.use(userRoutes);
 app.use(customerRoutes);
 app.use(calendarRoutes);

@@ -134,10 +134,10 @@ router.get("/sessions/topaid", isAuthenticated, async (req, res) => {
 // ========== DISPLAY ONE SESSION ==========
 router.get("/session/:id", isAuthenticated, async (req, res) => {
   try {
-    const sessionTofind = await Session.findById(req.params.id)
+    const sessionToFind = await Session.findById(req.params.id)
       .populate("coach")
       .populate("customer");
-    res.status(201).json(sessionTofind);
+    res.status(201).json(sessionToFind);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

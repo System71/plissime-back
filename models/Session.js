@@ -10,6 +10,7 @@ const Session = mongoose.model("Session", {
   },
   content: String,
   price: Number,
+  subscription: Boolean,
   program: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Program",
