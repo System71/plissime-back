@@ -7,6 +7,7 @@ const Subscription = mongoose.model("Subscription", {
   sessionUsed: Number,
   sessionInitial: Number,
   sessionPrice: Number,
+  totalPrice: Number,
   isPaid: Boolean,
   coach: {
     type: mongoose.Schema.Types.ObjectId,

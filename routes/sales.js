@@ -2,6 +2,7 @@ const express = require("express");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
 const Session = require("../models/Session");
+const Subscription = require("../models/Subscription");
 
 // ========== MONTH SALES ==========
 router.get("/sales/month", isAuthenticated, async (req, res) => {
@@ -18,8 +19,8 @@ router.get("/sales/month", isAuthenticated, async (req, res) => {
       59,
       59
     );
-
-    const month = await Session.aggregate([
+    // Session sales of the month
+    const monthSessions = await Session.aggregate([
       {
         $match: {
           coach: req.user._id,
@@ -35,9 +36,29 @@ router.get("/sales/month", isAuthenticated, async (req, res) => {
         },
       },
     ]);
-    const monthSales = month[0]?.monthSales || 0;
+    // Subscriptions sales of the month
+    const monthSubscriptions = await Subscription.aggregate([
+      {
+        $match: {
+          coach: req.user._id,
+          date: { $gte: startOfMonth, $lte: now },
+          isPaid: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          monthSales: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
 
-    const prevMonth = await Session.aggregate([
+    const monthSales =
+      (monthSessions[0]?.monthSales || 0) +
+      (monthSubscriptions[0]?.monthSales || 0);
+
+    // Session sales of the last month
+    const prevMonthSessions = await Session.aggregate([
       {
         $match: {
           coach: req.user._id,
@@ -53,7 +74,27 @@ router.get("/sales/month", isAuthenticated, async (req, res) => {
         },
       },
     ]);
-    const prevMonthSales = prevMonth[0]?.prevMonthSales || 0;
+
+    // Subscriptions sales of the last month
+    const prevMonthSubscriptions = await Subscription.aggregate([
+      {
+        $match: {
+          coach: req.user._id,
+          date: { $gte: startOfPrevMonth, $lte: endOfPrevMonth },
+          isPaid: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          monthSales: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
+
+    const prevMonthSales =
+      (prevMonthSessions[0]?.prevMonthSales || 0) +
+      (prevMonthSubscriptions[0]?.prevMonthSubscriptions || 0);
 
     let diffPrevMonth;
     if (prevMonthSales === 0) {
@@ -79,7 +120,8 @@ router.get("/sales/year", isAuthenticated, async (req, res) => {
     //12=month after december because january is 0, day 0 = day before the month => Last day of the year
     const endOfPrevYear = new Date(now.getFullYear() - 1, 12, 0, 23, 59, 59);
 
-    const year = await Session.aggregate([
+    // Session sales of the year
+    const yearSessions = await Session.aggregate([
       {
         $match: {
           coach: req.user._id,
@@ -95,9 +137,30 @@ router.get("/sales/year", isAuthenticated, async (req, res) => {
         },
       },
     ]);
-    const yearSales = year[0]?.yearSales || 0;
 
-    const prevYear = await Session.aggregate([
+    // Subscriptions sales of the year
+    const yearSubscriptions = await Subscription.aggregate([
+      {
+        $match: {
+          coach: req.user._id,
+          date: { $gte: startOfYear, $lte: now },
+          isPaid: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          yearSales: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
+
+    const yearSales =
+      (yearSessions[0]?.yearSales || 0) +
+      (yearSubscriptions[0]?.yearSales || 0);
+
+    // Session sales of the last year
+    const prevYearSessions = await Session.aggregate([
       {
         $match: {
           coach: req.user._id,
@@ -113,7 +176,27 @@ router.get("/sales/year", isAuthenticated, async (req, res) => {
         },
       },
     ]);
-    const prevYearSales = prevYear[0]?.prevYearSales || 0;
+
+    // Subscriptions sales of the last year
+    const prevYearSubscriptions = await Subscription.aggregate([
+      {
+        $match: {
+          coach: req.user._id,
+          date: { $gte: startOfPrevYear, $lte: endOfPrevYear },
+          isPaid: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          prevYearSales: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
+
+    const prevYearSales =
+      (prevYearSessions[0]?.prevYearSales || 0) +
+      (prevYearSubscriptions[0]?.prevYearSales || 0);
 
     let diffPrevYear;
     if (prevYearSales === 0) {
@@ -133,7 +216,7 @@ router.get("/sales/year", isAuthenticated, async (req, res) => {
 // ========== UPCOMING SALES ==========
 router.get("/sales/upcoming", isAuthenticated, async (req, res) => {
   try {
-    const result = await Session.aggregate([
+    const sessionsToCome = await Session.aggregate([
       {
         $match: {
           coach: req.user._id,
@@ -148,8 +231,29 @@ router.get("/sales/upcoming", isAuthenticated, async (req, res) => {
         },
       },
     ]);
-    const upcomingSales = result[0]?.upcomingSales || 0;
-    const paymentsToCome = result[0]?.paymentToCome || 0;
+
+    const subscriptionsToCome = await Subscription.aggregate([
+      {
+        $match: {
+          coach: req.user._id,
+          isPaid: false,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          upcomingSales: { $sum: "$totalPrice" },
+          paymentToCome: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const upcomingSales =
+      (sessionsToCome[0]?.upcomingSales || 0) +
+      (subscriptionsToCome[0]?.upcomingSales || 0);
+    const paymentsToCome =
+      (sessionsToCome[0]?.paymentToCome || 0) +
+      (subscriptionsToCome[0]?.paymentToCome || 0);
 
     res.status(200).json({ upcomingSales, paymentsToCome });
   } catch (error) {

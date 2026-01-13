@@ -17,6 +17,7 @@ router.post("/subscription/add", isAuthenticated, async (req, res) => {
       sessionUsed: 0,
       sessionInitial: sessionInitial,
       sessionPrice: sessionPrice,
+      totalPrice: sessionInitial * sessionPrice,
       isPaid: false,
       coach: req.user.id,
       customer: customer,
