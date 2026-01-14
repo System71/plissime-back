@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Session = require("../models/Session");
+const Subscription = require("../models/Subscription");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 
 // \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\
@@ -10,6 +11,28 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
   try {
     const { title, start, end, state, content, price, program, customer } =
       req.body;
+
+    let subscription = false;
+
+    const filter = {
+      statut: true,
+      coach: req.user._id,
+      customer: customer,
+      isPaid: true,
+    };
+    const customerSubscription = await Subscription.findOne(filter);
+    if (customerSubscription) {
+      subscription = true;
+      customerSubscription.sessionUsed++;
+      if (
+        customerSubscription.sessionInitial -
+          customerSubscription.sessionUsed ==
+        0
+      ) {
+        customerSubscription.statut = false;
+      }
+      await customerSubscription.save();
+    }
 
     const newSession = new Session({
       title: title,
@@ -21,8 +44,8 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       program: program,
       coach: req.user.id,
       customer: customer,
+      subscription: subscription,
     });
-
     await newSession.save();
     res.status(201).json(newSession);
   } catch (error) {

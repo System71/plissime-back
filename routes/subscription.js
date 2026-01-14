@@ -104,4 +104,22 @@ router.delete("/subscription/delete/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ========== FIND CUSTOMER ==========
+router.get("/subscription/find/:id", isAuthenticated, async (req, res) => {
+  try {
+    console.log("coucou");
+    const filter = {
+      coach: req.user._id,
+      customer: req.params.id,
+      statut: true,
+    };
+
+    const subscriptionToFind = await Subscription.findOne(filter);
+    console.log("subscriptionToFind=", subscriptionToFind);
+    res.status(201).json(subscriptionToFind);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
