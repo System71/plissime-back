@@ -355,14 +355,10 @@ router.get(
   isAuthenticated,
   async (req, res) => {
     const now = new Date();
-    // const tomorrow = new Date(
-    //   Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
-    // );
     try {
       const filter = {
         customer: req.params.id,
         state: "Confirmée",
-        // start: { $gte: tomorrow },
         start: { $gte: now },
       };
 
