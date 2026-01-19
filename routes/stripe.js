@@ -24,6 +24,39 @@ const translateStatus = (status) => {
   }
 };
 
+router.get("/check-promo/:promoCode", isAuthenticated, async (req, res) => {
+  try {
+    const promoCodes = await stripe.promotionCodes.list({
+      code: req.params.promoCode,
+      active: true,
+      limit: 1,
+    });
+    console.log("promoCodes=", promoCodes);
+    const promotionCodeId = promoCodes.data[0].id;
+    res.status(200).json(promotionCodeId);
+  } catch (error) {
+    console.error("ERREUR STRIPE =>", error);
+    res.status(500).json({ error: "Erreur création compte Stripe" });
+  }
+});
+
+/*
+2️⃣ Ton backend valide le code
+const promoCodes = await stripe.promotionCodes.list({
+  code: "RIGAUDIER",
+  active: true,
+  limit: 1,
+});
+
+const promotionCodeId = promoCodes.data[0].id;
+
+3️⃣ Tu crées l’abonnement
+const subscription = await stripe.subscriptions.create({
+  customer: customerId,
+  items: [{ price: "price_annual_390" }],
+  promotion_code: promotionCodeId, // ✅ BON
+});*/
+
 // Create connected account STRIPE for coachs
 router.post("/create-connected-account", isAuthenticated, async (req, res) => {
   try {
@@ -47,7 +80,7 @@ router.post("/create-connected-account", isAuthenticated, async (req, res) => {
     const updateUser = await User.findByIdAndUpdate(
       req.user._id,
       { stripe_id: account.id },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json({ url: accountLink.url });
@@ -101,6 +134,7 @@ router.post(
   async (req, res) => {
     const priceId = process.env.ANNUAL_SUB;
     const coachId = req.user;
+    const promoCode = req.body.codePromo;
 
     try {
       const coach = await User.findById(coachId);
@@ -117,15 +151,39 @@ router.post(
         await coach.save();
       }
 
+      // 1️⃣ Vérifier le code promo
+      const promoList = await stripe.promotionCodes.list({
+        code: promoCode,
+        active: true,
+        limit: 1,
+      });
+
+      let trial;
+      let promoID;
+
+      if (promoList.data.length > 0) {
+        promo = promoList.data[0];
+        const coupon = await stripe.coupons.retrieve(promo.coupon.id);
+
+        // 2️⃣ Logique selon le type de promo
+        if (coupon.percent_off === 100) {
+          // 100% → on peut le considérer comme un trial
+          trial = 180; // par exemple 6 mois
+        } else {
+          // autre % ou montant → on applique le coupon
+          promoID = coupon.id;
+        }
+      }
+
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
+        discounts: promoID ? [{ promotion_code: promoID }] : [],
         subscription_data: {
-          metadata: {
-            coachId: coach._id.toString(),
-          },
+          metadata: { coachId: coach._id.toString() },
+          trial_period_days: trial ? 180 : undefined,
         },
         //voir pour faire des pages adéquates
         success_url: process.env.FRONTEND_URL,
@@ -136,7 +194,7 @@ router.post(
       console.error("Erreur création session:", error);
       res.status(500).json({ error: error.message });
     }
-  }
+  },
 );
 
 // Mensual subscription for coachs
@@ -180,7 +238,7 @@ router.post(
       console.error("Erreur création session:", error);
       res.status(500).json({ error: error.message });
     }
-  }
+  },
 );
 
 router.get(
@@ -203,7 +261,7 @@ router.get(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 router.get(
@@ -230,7 +288,7 @@ router.get(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // backend (Node)
