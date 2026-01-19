@@ -134,7 +134,7 @@ router.post(
   async (req, res) => {
     const priceId = process.env.ANNUAL_SUB;
     const coachId = req.user;
-    const promoCode = req.body.codePromo;
+    const codePromo = req.body.codePromo;
 
     try {
       const coach = await User.findById(coachId);
@@ -152,26 +152,25 @@ router.post(
       }
 
       // 1️⃣ Vérifier le code promo
-      const promoList = await stripe.promotionCodes.list({
-        code: promoCode,
+      const promoStripe = await stripe.promotionCodes.list({
+        code: codePromo,
         active: true,
         limit: 1,
       });
 
-      let trial;
       let promoID;
+      let trial;
 
-      if (promoList.data.length > 0) {
-        promo = promoList.data[0];
+      if (promoStripe.data.length > 0) {
+        const promo = promoStripe.data[0];
         const coupon = await stripe.coupons.retrieve(promo.coupon.id);
-
         // 2️⃣ Logique selon le type de promo
         if (coupon.percent_off === 100) {
           // 100% → on peut le considérer comme un trial
           trial = 180; // par exemple 6 mois
         } else {
           // autre % ou montant → on applique le coupon
-          promoID = coupon.id;
+          promoID = promoStripe.data[0].id;
         }
       }
 

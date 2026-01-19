@@ -5,7 +5,6 @@ const isAuthenticated = async (req, res, next) => {
   try {
     if (req.headers.authorization) {
       const token = req.headers.authorization.replace("Bearer ", "");
-      console.log("token=", token);
 
       const user = await User.findOne({ token });
       if (user) {
