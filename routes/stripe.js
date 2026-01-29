@@ -145,6 +145,7 @@ router.post(
         const customer = await stripe.customers.create({
           email: coach.email,
           metadata: { coachId: coach._id.toString() },
+          address: "auto",
         });
         customerId = customer.id;
         coach.subscription.stripeCustomerId = customerId;
