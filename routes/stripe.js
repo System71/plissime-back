@@ -24,39 +24,6 @@ const translateStatus = (status) => {
   }
 };
 
-router.get("/check-promo/:promoCode", isAuthenticated, async (req, res) => {
-  try {
-    const promoCodes = await stripe.promotionCodes.list({
-      code: req.params.promoCode,
-      active: true,
-      limit: 1,
-    });
-    console.log("promoCodes=", promoCodes);
-    const promotionCodeId = promoCodes.data[0].id;
-    res.status(200).json(promotionCodeId);
-  } catch (error) {
-    console.error("ERREUR STRIPE =>", error);
-    res.status(500).json({ error: "Erreur création compte Stripe" });
-  }
-});
-
-/*
-2️⃣ Ton backend valide le code
-const promoCodes = await stripe.promotionCodes.list({
-  code: "RIGAUDIER",
-  active: true,
-  limit: 1,
-});
-
-const promotionCodeId = promoCodes.data[0].id;
-
-3️⃣ Tu crées l’abonnement
-const subscription = await stripe.subscriptions.create({
-  customer: customerId,
-  items: [{ price: "price_annual_390" }],
-  promotion_code: promotionCodeId, // ✅ BON
-});*/
-
 // Create connected account STRIPE for coachs
 router.post("/create-connected-account", isAuthenticated, async (req, res) => {
   try {
@@ -152,26 +119,28 @@ router.post(
         await coach.save();
       }
 
-      // 1️⃣ Vérifier le code promo
-      const promoStripe = await stripe.promotionCodes.list({
-        code: codePromo,
-        active: true,
-        limit: 1,
-      });
-
       let promoID;
       let trial;
 
-      if (promoStripe.data.length > 0) {
-        const promo = promoStripe.data[0];
-        const coupon = await stripe.coupons.retrieve(promo.coupon.id);
-        // 2️⃣ Logique selon le type de promo
-        if (coupon.percent_off === 100) {
-          // 100% → on peut le considérer comme un trial
-          trial = 180; // par exemple 6 mois
-        } else {
-          // autre % ou montant → on applique le coupon
-          promoID = promoStripe.data[0].id;
+      if (codePromo) {
+        // 1️⃣ Vérifier le code promo
+        const promoStripe = await stripe.promotionCodes.list({
+          code: codePromo,
+          active: true,
+          limit: 1,
+        });
+
+        if (promoStripe.data.length > 0) {
+          const promo = promoStripe.data[0];
+          const coupon = await stripe.coupons.retrieve(promo.coupon.id);
+          // 2️⃣ Logique selon le type de promo
+          if (coupon.percent_off === 100) {
+            // 100% → on peut le considérer comme un trial
+            trial = 180; // par exemple 6 mois
+          } else {
+            // autre % ou montant → on applique le coupon
+            promoID = promoStripe.data[0].id;
+          }
         }
       }
 
