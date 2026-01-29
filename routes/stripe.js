@@ -185,6 +185,9 @@ router.post(
           trial_period_days: trial ? 180 : undefined,
         },
         automatic_tax: { enabled: true },
+        customer_update: {
+          address: "auto",
+        },
         //voir pour faire des pages adéquates
         success_url: process.env.FRONTEND_URL,
         cancel_url: process.env.FRONTEND_URL,
