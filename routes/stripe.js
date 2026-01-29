@@ -185,6 +185,9 @@ router.post(
           trial_period_days: trial ? 180 : undefined,
         },
         automatic_tax: { enabled: true },
+
+        billing_address_collection: "required",
+
         customer_update: {
           address: "auto",
         },
