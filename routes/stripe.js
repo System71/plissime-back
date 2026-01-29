@@ -220,6 +220,7 @@ router.post(
         const customer = await stripe.customers.create({
           email: coach.email,
           metadata: { coachId: coach._id.toString() },
+          address: { country: "FR" },
         });
         customerId = customer.id;
         coach.subscription.stripeCustomerId = customerId;
@@ -235,6 +236,13 @@ router.post(
           metadata: {
             coachId: coach._id.toString(),
           },
+        },
+        automatic_tax: { enabled: true },
+
+        billing_address_collection: "required",
+
+        customer_update: {
+          address: "auto",
         },
         //voir pour faire des pages adéquates
         success_url: process.env.FRONTEND_URL,
