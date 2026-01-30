@@ -102,6 +102,8 @@ router.post(
     const priceId = process.env.ANNUAL_SUB;
     const coachId = req.user;
     const codePromo = req.body.codePromo;
+    let promoID;
+    let trial;
 
     try {
       const coach = await User.findById(coachId);
@@ -118,9 +120,6 @@ router.post(
         coach.subscription.stripeCustomerId = customerId;
         await coach.save();
       }
-
-      let promoID;
-      let trial;
 
       if (codePromo) {
         // 1️⃣ Vérifier le code promo
@@ -180,9 +179,13 @@ router.post(
   async (req, res) => {
     const priceId = process.env.MENSUAL_SUB;
     const coachId = req.user;
+    const codePromo = req.body.codePromo;
+    let promoID;
+    let trial;
 
     try {
       const coach = await User.findById(coachId);
+
       // Create customer account STRIPE for coachs if doesn't exist
       let customerId = coach.subscription.stripeCustomerId;
       if (!customerId) {
@@ -196,15 +199,36 @@ router.post(
         await coach.save();
       }
 
+      if (codePromo) {
+        // 1️⃣ Vérifier le code promo
+        const promoStripe = await stripe.promotionCodes.list({
+          code: codePromo,
+          active: true,
+          limit: 1,
+        });
+        if (promoStripe.data.length > 0) {
+          const promo = promoStripe.data[0];
+          const coupon = await stripe.coupons.retrieve(promo.coupon.id);
+          // 2️⃣ Logique selon le type de promo
+          if (coupon.percent_off === 100) {
+            // 100% → on peut le considérer comme un trial
+            trial = 180; // par exemple 6 mois
+          } else {
+            // autre % ou montant → on applique le coupon
+            promoID = promoStripe.data[0].id;
+          }
+        }
+      }
+
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: priceId, quantity: 1 }],
+        discounts: promoID ? [{ promotion_code: promoID }] : [],
         subscription_data: {
-          metadata: {
-            coachId: coach._id.toString(),
-          },
+          metadata: { coachId: coach._id.toString() },
+          trial_period_days: trial ? 180 : undefined,
         },
         automatic_tax: { enabled: true },
 
