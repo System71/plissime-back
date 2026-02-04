@@ -98,7 +98,7 @@ router.put("/user/signup/finish", async (req, res) => {
         siret: siret,
         certification: certification,
       },
-      { new: true }
+      { new: true },
     );
     res.status(201).json({ message: "User complété" });
   } catch (error) {
@@ -170,7 +170,7 @@ router.get("/user/stripe-onboarding/:userId", async (req, res) => {
 });
 
 // ========== DISPLAY USER INFORMATIONS ==========
-router.get("/user/informations", checkSubscription, async (req, res) => {
+router.get("/user/informations", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user);
     res.status(200).json(user);
@@ -180,7 +180,7 @@ router.get("/user/informations", checkSubscription, async (req, res) => {
 });
 
 // ========== MODIFY USER INFORMATIONS ==========
-router.put("/user/informations", checkSubscription, async (req, res) => {
+router.put("/user/informations", isAuthenticated, async (req, res) => {
   try {
     const {
       email,
@@ -211,7 +211,7 @@ router.put("/user/informations", checkSubscription, async (req, res) => {
         certification: certification,
         subscription: subscription,
       },
-      { new: true }
+      { new: true },
     );
     res.status(201).json({ message: "User modifié!" });
   } catch (error) {
@@ -223,7 +223,7 @@ router.put("/user/informations", checkSubscription, async (req, res) => {
 router.get("/mycoachs", isAuthenticated, async (req, res) => {
   try {
     const customer = await Customer.findById(req.customer._id).populate(
-      "coachs.id"
+      "coachs.id",
     );
     console.log("customer=", customer);
     res.status(200).json(customer.coachs);
