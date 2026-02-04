@@ -184,6 +184,7 @@ router.put("/user/informations", isAuthenticated, async (req, res) => {
   try {
     const {
       email,
+      password,
       name,
       firstName,
       address,
@@ -196,10 +197,15 @@ router.put("/user/informations", isAuthenticated, async (req, res) => {
       subscription,
     } = req.body;
 
+    const salt = uid2(16);
+    const hash = SHA256(password + salt).toString(encBase64);
+
     const userToModify = await User.findByIdAndUpdate(
       req.user,
       {
         email: email,
+        hash: hash,
+        salt: salt,
         name: name,
         firstName: firstName,
         address: address,

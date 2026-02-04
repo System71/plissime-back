@@ -48,7 +48,8 @@ app.get("/informations", isAuthenticated, async (req, res) => {
       const sub = req.user.subscription.status;
       const firstName = req.user.firstName;
       const stripeId = req.user.subscription.stripeCustomerId;
-      res.status(200).json({ sub, firstName, stripeId });
+      const stripeConnected = req.user.stripe_id;
+      res.status(200).json({ sub, firstName, stripeId, stripeConnected });
     } else if (req.customer) {
       const firstName = req.customer.firstName;
       res.status(200).json({ firstName });
