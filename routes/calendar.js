@@ -179,7 +179,7 @@ router.get("/status", checkSubscription, async (req, res) => {
   }
 
   if (coach.oauth.accessToken) {
-    return res.json({ linked: true });
+    return res.json({ linked: true, email: coach.oauth.email });
   } else {
     return res.json({ linked: false });
   }
