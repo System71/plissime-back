@@ -38,6 +38,7 @@ const User = mongoose.model("User", {
     accessToken: String,
     refreshToken: String,
     expiryDate: Number,
+    email: String,
   },
   stripe_id: {
     type: String,

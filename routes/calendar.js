@@ -69,18 +69,33 @@ router.get("/auth/google/init", checkSubscription, async (req, res) => {
 // Callback après l'authentification
 router.get("/auth/google/callback", async (req, res) => {
   const { code, state } = req.query;
+
   if (!code) {
     return res.status(400).send("Code d'autorisation manquant !");
   }
+
   try {
     const oauth2Client = createOAuthClient();
     const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    // 🔥 Récupération du compte Google
+    const oauth2 = google.oauth2({
+      auth: oauth2Client,
+      version: "v2",
+    });
+
+    console.log("coucou");
+    const { data } = await oauth2.userinfo.v2.me.get();
+
+    console.log("data=", data);
 
     await User.findByIdAndUpdate(state, {
       oauth: {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         expiryDate: tokens.expiry_date,
+        email: data.email,
       },
     });
     res.redirect(process.env.FRONTEND_URL + "planning"); // redirige vers le front
