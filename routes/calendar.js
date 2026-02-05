@@ -38,7 +38,7 @@ async function refreshTokenIfNeeded(user) {
           "oauth.refreshToken": credentials.refresh_token,
         }),
       },
-      { new: true }
+      { new: true },
     );
 
     oauth2Client.setCredentials(credentials);
@@ -102,11 +102,13 @@ router.get("/events", checkSubscription, async (req, res) => {
   const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
   try {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
     // 1. Récupérer événements Google Calendar
     const googleEvents = await calendar.events.list({
       calendarId: "primary",
-      timeMin: new Date().toISOString(),
-      maxResults: 50,
+      timeMin: sixMonthsAgo.toISOString(),
       singleEvents: true,
       orderBy: "startTime",
     });
@@ -123,7 +125,7 @@ router.get("/events", checkSubscription, async (req, res) => {
 
     // 2. Récupérer les sessions internes de ta DB
     const localEvents = await Session.find({ coach: req.user }).populate(
-      "customer"
+      "customer",
     );
 
     // console.log("session local = ", localEvents);
