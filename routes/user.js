@@ -98,7 +98,7 @@ router.put("/user/signup/finish", async (req, res) => {
         siret: siret,
         certification: certification,
       },
-      { new: true },
+      { new: true }
     );
     res.status(201).json({ message: "User complété" });
   } catch (error) {
@@ -217,7 +217,7 @@ router.put("/user/informations", isAuthenticated, async (req, res) => {
         certification: certification,
         subscription: subscription,
       },
-      { new: true },
+      { new: true }
     );
     res.status(201).json({ message: "User modifié!" });
   } catch (error) {
@@ -229,7 +229,7 @@ router.put("/user/informations", isAuthenticated, async (req, res) => {
 router.get("/mycoachs", isAuthenticated, async (req, res) => {
   try {
     const customer = await Customer.findById(req.customer._id).populate(
-      "coachs.id",
+      "coachs.id"
     );
     console.log("customer=", customer);
     res.status(200).json(customer.coachs);

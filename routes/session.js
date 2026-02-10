@@ -3,6 +3,9 @@ const router = express.Router();
 const Session = require("../models/Session");
 const Subscription = require("../models/Subscription");
 const isAuthenticated = require("../middlewares/isAuthenticated");
+const { refreshTokenIfNeeded } = require("../middlewares/auth");
+const User = require("../models/User");
+const { google } = require("googleapis");
 
 // \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\
 
@@ -11,6 +14,10 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
   try {
     const { title, start, end, state, content, price, program, customer } =
       req.body;
+
+    // =====================
+    // LOGIQUE ABONNEMENT
+    // =====================
 
     let subscription = false;
 
@@ -34,6 +41,10 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       await customerSubscription.save();
     }
 
+    // =====================
+    // CRÉATION SESSION DB
+    // =====================
+
     const newSession = new Session({
       title: title,
       start: start,
@@ -47,6 +58,51 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       subscription: subscription,
     });
     await newSession.save();
+
+    // =====================
+    // GOOGLE CALENDAR
+    // =====================
+
+    const coach = await User.findById(req.user.id);
+
+    // Si le coach a connecté Google
+    if (coach?.oauth?.accessToken) {
+      try {
+        const oauth2Client = await refreshTokenIfNeeded(coach);
+
+        const calendar = google.calendar({
+          version: "v3",
+          auth: oauth2Client,
+        });
+
+        const googleEvent = await calendar.events.insert({
+          calendarId: "primary",
+          requestBody: {
+            summary: title || "Session de coaching",
+            description: content || "Session créée depuis l'application",
+            start: {
+              dateTime: new Date(start).toISOString(),
+              timeZone: "Europe/Paris",
+            },
+            end: {
+              dateTime: new Date(end).toISOString(),
+              timeZone: "Europe/Paris",
+            },
+          },
+        });
+
+        // Sauvegarde du lien Google
+        newSession.googleEventId = googleEvent.data.id;
+        await newSession.save();
+      } catch (googleError) {
+        // ⚠️ On ne bloque PAS la création de session
+        console.error(
+          "❌ Erreur Google Calendar (session créée quand même):",
+          googleError.message
+        );
+      }
+    }
+
     res.status(201).json(newSession);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -220,21 +276,79 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
 // ========== MODIFY SESSION ==========
 router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
   try {
+    console.log("coucou");
     const { title, start, end, state, content, price, program } = req.body;
 
-    const sessionToModify = await Session.findByIdAndUpdate(
-      req.params.id,
-      {
-        title: title,
-        start: start,
-        end: end,
-        state: state,
-        content: content,
-        price: price,
-        program: program,
-      },
-      { new: true }
-    );
+    // const sessionToModify = await Session.findByIdAndUpdate(
+    //   req.params.id,
+    //   {
+    //     title: title,
+    //     start: start,
+    //     end: end,
+    //     state: state,
+    //     content: content,
+    //     price: price,
+    //     program: program,
+    //   },
+    //   { new: true }
+    // );
+
+    const session = await Session.findById(req.params.id).populate("customer");
+
+    console.log("session=", session);
+
+    if (!session) {
+      return res.status(404).json({ message: "Session introuvable" });
+    }
+
+    // =====================
+    // UPDATE GOOGLE
+    // =====================
+    const coach = await User.findById(session.coach);
+
+    if (coach?.oauth?.accessToken && session.googleEventId) {
+      try {
+        const oauth2Client = await refreshTokenIfNeeded(coach);
+
+        const calendar = google.calendar({
+          version: "v3",
+          auth: oauth2Client,
+        });
+
+        await calendar.events.patch({
+          calendarId: "primary",
+          eventId: session.googleEventId,
+          requestBody: {
+            summary: title || session.title,
+            description: content || session.content,
+            start: {
+              dateTime: new Date(start || session.start).toISOString(),
+              timeZone: "Europe/Paris",
+            },
+            end: {
+              dateTime: new Date(end || session.end).toISOString(),
+              timeZone: "Europe/Paris",
+            },
+          },
+        });
+      } catch (googleError) {
+        console.error("❌ Erreur Google update:", googleError.message);
+      }
+    }
+
+    // =====================
+    // UPDATE DB
+    // =====================
+    session.title = title ?? session.title;
+    session.start = start ?? session.start;
+    session.end = end ?? session.end;
+    session.state = state ?? session.state;
+    session.content = content ?? session.content;
+    session.price = price ?? session.price;
+    session.program = program ?? session.program;
+
+    await session.save();
+
     res.status(201).json({ message: "Session modifiée!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -245,6 +359,35 @@ router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
 router.delete("/session/delete/:id", isAuthenticated, async (req, res) => {
   try {
     const sessionToDelete = await Session.findByIdAndDelete(req.params.id);
+
+    if (!sessionToDelete) {
+      return res.status(404).json({ message: "Session introuvable" });
+    }
+
+    // =====================
+    // DELETE GOOGLE
+    // =====================
+
+    const coach = await User.findById(sessionToDelete.coach);
+
+    if (coach?.oauth?.accessToken && sessionToDelete.googleEventId) {
+      try {
+        const oauth2Client = await refreshTokenIfNeeded(coach);
+
+        const calendar = google.calendar({
+          version: "v3",
+          auth: oauth2Client,
+        });
+
+        await calendar.events.delete({
+          calendarId: "primary",
+          eventId: sessionToDelete.googleEventId,
+        });
+      } catch (googleError) {
+        console.error("❌ Erreur Google delete:", googleError.message);
+      }
+    }
+
     res.status(201).json("Session supprimée!");
   } catch (error) {
     res.status(500).json({ message: error.message });

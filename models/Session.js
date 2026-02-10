@@ -27,6 +27,10 @@ const Session = mongoose.model("Session", {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
   },
+  googleEventId: {
+    type: String,
+    default: null,
+  },
 });
 
 module.exports = Session;

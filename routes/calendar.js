@@ -1,55 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const { SCOPES, createOAuthClient } = require("../middlewares/auth");
+const {
+  SCOPES,
+  createOAuthClient,
+  refreshTokenIfNeeded,
+} = require("../middlewares/auth");
 const { google } = require("googleapis");
-const isAuthenticated = require("../middlewares/isAuthenticated");
 const Session = require("../models/Session");
 const checkSubscription = require("../middlewares/checkSubscription");
-
-//Fonction qui check si besoin de refresh le token
-async function refreshTokenIfNeeded(user) {
-  const oauth2Client = createOAuthClient();
-
-  oauth2Client.setCredentials({
-    access_token: user.oauth.accessToken,
-    refresh_token: user.oauth.refreshToken,
-    expiry_date: user.oauth.expiryDate,
-  });
-
-  const isExpired =
-    !user.oauth.expiryDate || user.oauth.expiryDate <= Date.now();
-
-  if (!isExpired) {
-    return oauth2Client; // rien à faire, token encore valide
-  }
-
-  console.log("🔁 Refresh du token Google en cours...");
-
-  try {
-    const { credentials } = await oauth2Client.refreshAccessToken();
-
-    await User.findByIdAndUpdate(
-      user._id,
-      {
-        "oauth.accessToken": credentials.access_token,
-        "oauth.expiryDate": credentials.expiry_date,
-        ...(credentials.refresh_token && {
-          "oauth.refreshToken": credentials.refresh_token,
-        }),
-      },
-      { new: true },
-    );
-
-    oauth2Client.setCredentials(credentials);
-
-    console.log("✅ Token Google mis à jour !");
-    return oauth2Client;
-  } catch (err) {
-    console.error("❌ Erreur lors du rafraîchissement:", err);
-    throw new Error("Google token refresh failed");
-  }
-}
 
 // Route pour rediriger l'utilisateur vers Google
 router.get("/auth/google/init", checkSubscription, async (req, res) => {
@@ -85,10 +44,7 @@ router.get("/auth/google/callback", async (req, res) => {
       version: "v2",
     });
 
-    console.log("coucou");
     const { data } = await oauth2.userinfo.v2.me.get();
-
-    console.log("data=", data);
 
     await User.findByIdAndUpdate(state, {
       oauth: {
@@ -140,7 +96,7 @@ router.get("/events", checkSubscription, async (req, res) => {
 
     // 2. Récupérer les sessions internes de ta DB
     const localEvents = await Session.find({ coach: req.user }).populate(
-      "customer",
+      "customer"
     );
 
     // console.log("session local = ", localEvents);
