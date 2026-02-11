@@ -86,8 +86,9 @@ router.get("/events", checkSubscription, async (req, res) => {
       title: session.customer.name,
       start: session.start,
       end: session.end,
-      backgroundColor: "#34A853",
-      borderColor: "#34A853",
+      backgroundColor: "#a8c6cc",
+      borderColor: "#a8c6cc",
+      textColor: "#000000",
       source: "local",
     }));
 
@@ -112,15 +113,13 @@ router.get("/events", checkSubscription, async (req, res) => {
         title: event.summary,
         start: event.start.dateTime || event.start.date,
         end: event.end.dateTime || event.end.date,
-        backgroundColor: "#4285F4",
-        borderColor: "#4285F4",
+        backgroundColor: "#34A853",
+        borderColor: "#34A853",
         source: "google",
       }));
 
     // 3. Fusionner les deux
     const allEvents = [...formattedGoogleEvents, ...formattedLocalEvents];
-
-    // console.log("sessions = ", allEvents);
 
     res.json(allEvents);
   } catch (error) {

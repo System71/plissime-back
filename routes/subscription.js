@@ -24,7 +24,7 @@ router.post("/subscription/add", isAuthenticated, async (req, res) => {
     });
 
     await newSubscription.save();
-    console.log("new sub=", newSubscription);
+
     res.status(201).json(newSubscription);
   } catch (error) {
     console.log(error.message);
@@ -46,7 +46,7 @@ router.get("/subscriptions", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       subscriptions = subscriptions.filter((sub) =>
-        sub.customer?.name?.match(regex)
+        sub.customer?.name?.match(regex),
       );
     }
 
@@ -70,7 +70,7 @@ router.get("/subscriptions/active", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       subscriptions = subscriptions.filter((sub) =>
-        sub.customer?.name?.match(regex)
+        sub.customer?.name?.match(regex),
       );
     }
 
@@ -96,7 +96,7 @@ router.get("/subscription/:id", isAuthenticated, async (req, res) => {
 router.delete("/subscription/delete/:id", isAuthenticated, async (req, res) => {
   try {
     const subscriptionToDelete = await Subscription.findByIdAndDelete(
-      req.params.id
+      req.params.id,
     );
     res.status(201).json("Abonnement supprimée!");
   } catch (error) {
@@ -107,7 +107,6 @@ router.delete("/subscription/delete/:id", isAuthenticated, async (req, res) => {
 // ========== FIND CUSTOMER ==========
 router.get("/subscription/find/:id", isAuthenticated, async (req, res) => {
   try {
-    console.log("coucou");
     const filter = {
       coach: req.user._id,
       customer: req.params.id,
@@ -115,7 +114,7 @@ router.get("/subscription/find/:id", isAuthenticated, async (req, res) => {
     };
 
     const subscriptionToFind = await Subscription.findOne(filter);
-    console.log("subscriptionToFind=", subscriptionToFind);
+
     res.status(201).json(subscriptionToFind);
   } catch (error) {
     res.status(500).json({ message: error.message });
