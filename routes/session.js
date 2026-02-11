@@ -98,7 +98,7 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
         // ⚠️ On ne bloque PAS la création de session
         console.error(
           "❌ Erreur Google Calendar (session créée quand même):",
-          googleError.message
+          googleError.message,
         );
       }
     }
@@ -124,7 +124,7 @@ router.get("/sessions/upcoming", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       sessions = sessions.filter((session) =>
-        session.customer?.name?.match(regex)
+        session.customer?.name?.match(regex),
       );
     }
 
@@ -153,7 +153,7 @@ router.get("/sessions/past", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       sessions = sessions.filter((session) =>
-        session.customer?.name?.match(regex)
+        session.customer?.name?.match(regex),
       );
     }
 
@@ -177,7 +177,7 @@ router.get("/sessions/paid", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       sessionsPaid = sessionsPaid.filter((session) =>
-        session.customer?.name?.match(regex)
+        session.customer?.name?.match(regex),
       );
     }
 
@@ -201,7 +201,7 @@ router.get("/sessions/topaid", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       sessionsToPaid = sessionsToPaid.filter((session) =>
-        session.customer?.name?.match(regex)
+        session.customer?.name?.match(regex),
       );
     }
     res.status(200).json(sessionsToPaid);
@@ -226,10 +226,10 @@ router.get("/session/:id", isAuthenticated, async (req, res) => {
 router.get("/sessions/daily", isAuthenticated, async (req, res) => {
   const now = new Date();
   const todayStart = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0),
   );
   const tomorrowStart = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0),
   );
   try {
     const daySessions = await Session.find({
@@ -249,7 +249,7 @@ router.get("/sessions/daily", isAuthenticated, async (req, res) => {
 router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
   const now = new Date();
   const tomorrow = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0),
   );
   try {
     const { name } = req.query;
@@ -263,7 +263,7 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
     if (name) {
       const regex = new RegExp(name, "i");
       upcomingSessions = upcomingSessions.filter((session) =>
-        session.customer?.name?.match(regex)
+        session.customer?.name?.match(regex),
       );
     }
 
@@ -276,26 +276,9 @@ router.get("/sessions/user/upcoming", isAuthenticated, async (req, res) => {
 // ========== MODIFY SESSION ==========
 router.put("/session/modify/:id", isAuthenticated, async (req, res) => {
   try {
-    console.log("coucou");
     const { title, start, end, state, content, price, program } = req.body;
 
-    // const sessionToModify = await Session.findByIdAndUpdate(
-    //   req.params.id,
-    //   {
-    //     title: title,
-    //     start: start,
-    //     end: end,
-    //     state: state,
-    //     content: content,
-    //     price: price,
-    //     program: program,
-    //   },
-    //   { new: true }
-    // );
-
     const session = await Session.findById(req.params.id).populate("customer");
-
-    console.log("session=", session);
 
     if (!session) {
       return res.status(404).json({ message: "Session introuvable" });
@@ -421,7 +404,7 @@ router.get("/sessions/next/:customerId", isAuthenticated, async (req, res) => {
 router.get("/sessions/customer/upcoming", isAuthenticated, async (req, res) => {
   const now = new Date();
   const tomorrow = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0),
   );
   try {
     const filter = {
@@ -489,7 +472,7 @@ router.get(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== DISPLAY CUSTOMER SESSIONS TO PAID (COACH DIPLAY) ==========
@@ -511,7 +494,7 @@ router.get(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 module.exports = router;
