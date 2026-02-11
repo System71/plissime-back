@@ -76,30 +76,10 @@ router.get("/events", checkSubscription, async (req, res) => {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    // 1. Récupérer événements Google Calendar
-    const googleEvents = await calendar.events.list({
-      calendarId: "primary",
-      timeMin: sixMonthsAgo.toISOString(),
-      singleEvents: true,
-      orderBy: "startTime",
-    });
-
-    const formattedGoogleEvents = googleEvents.data.items.map((event) => ({
-      id: event.id,
-      title: event.summary,
-      start: event.start.dateTime || event.start.date,
-      end: event.end.dateTime || event.end.date,
-      backgroundColor: "#4285F4",
-      borderColor: "#4285F4",
-      source: "google",
-    }));
-
-    // 2. Récupérer les sessions internes de ta DB
+    // 1. Récupérer les sessions internes de ta DB
     const localEvents = await Session.find({ coach: req.user }).populate(
-      "customer"
+      "customer",
     );
-
-    // console.log("session local = ", localEvents);
 
     const formattedLocalEvents = localEvents.map((session) => ({
       id: session._id,
@@ -110,6 +90,32 @@ router.get("/events", checkSubscription, async (req, res) => {
       borderColor: "#34A853",
       source: "local",
     }));
+
+    const googleLinkedIds = new Set(
+      localEvents
+        .filter((session) => session.googleEventId)
+        .map((session) => session.googleEventId),
+    );
+
+    // 2. Récupérer événements Google Calendar
+    const googleEvents = await calendar.events.list({
+      calendarId: "primary",
+      timeMin: sixMonthsAgo.toISOString(),
+      singleEvents: true,
+      orderBy: "startTime",
+    });
+
+    const formattedGoogleEvents = googleEvents.data.items
+      .filter((event) => !googleLinkedIds.has(event.id)) // 🔥 filtre anti-doublon
+      .map((event) => ({
+        id: event.id,
+        title: event.summary,
+        start: event.start.dateTime || event.start.date,
+        end: event.end.dateTime || event.end.date,
+        backgroundColor: "#4285F4",
+        borderColor: "#4285F4",
+        source: "google",
+      }));
 
     // 3. Fusionner les deux
     const allEvents = [...formattedGoogleEvents, ...formattedLocalEvents];
