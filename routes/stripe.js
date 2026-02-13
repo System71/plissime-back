@@ -62,7 +62,6 @@ router.post("/create-payment-intent", isAuthenticated, async (req, res) => {
   try {
     const { coachId, amount, sessionId } = req.body; // amount in centimes (ex: 2000 = 20€)
 
-    console.log("payment intent");
     const coach = await User.findById(coachId);
     if (!coach || !coach.stripe_id) {
       return res
@@ -86,7 +85,6 @@ router.post("/create-payment-intent", isAuthenticated, async (req, res) => {
       },
     });
 
-    console.log(paymentIntent);
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error("Erreur création PaymentIntent:", error);
@@ -291,7 +289,6 @@ router.get(
         exp_year: paymentMethods.data[0].card.exp_year,
       };
 
-      console.log("payment method=", formattedPaymentMethod);
       res.status(201).json(formattedPaymentMethod);
     } catch (error) {
       res.status(500).json({ message: error.message });

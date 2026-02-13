@@ -489,7 +489,6 @@ router.get(
       };
 
       const upcomingSessions = await Session.find(filter);
-      console.log("upcomingSessions=", upcomingSessions);
       res.status(201).json(upcomingSessions);
     } catch (error) {
       res.status(500).json({ message: error.message });
