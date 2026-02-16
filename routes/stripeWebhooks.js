@@ -11,12 +11,11 @@ router.post(
   express.raw({ type: "application/json" }),
   async (request, response) => {
     const endpointSecret = process.env.ENDPOINTSECRET;
-    console.log("🔥 WEBHOOK HIT");
-    console.log("Length du buffer:", request.body.length);
-    console.log("Preview:", request.body.toString("utf8", 0, 200));
-    console.log("Headers reçus:", request.headers);
-    console.log("Secret brute:", JSON.stringify(endpointSecret));
-    console.log("Account header:", request.headers["stripe-account"]);
+    // console.log("🔥 WEBHOOK HIT");
+    // console.log("Length du buffer:", request.body.length);
+    // console.log("Preview:", request.body.toString("utf8", 0, 200));
+    // console.log("Headers reçus:", request.headers);
+    // console.log("Secret brute:", JSON.stringify(endpointSecret));
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
@@ -25,27 +24,15 @@ router.post(
       const signature = request.headers["stripe-signature"];
       console.log("Signature header:", signature);
 
-      // try {
-      //   event = stripe.webhooks.constructEvent(
-      //     request.body,
-      //     signature,
-      //     endpointSecret,
-      //   );
-      // } catch (err) {
-      //   console.log(`⚠️  Webhook signature verification failed.`, err.message);
-      //   return response.sendStatus(400);
-      // }
       try {
         event = stripe.webhooks.constructEvent(
           request.body,
-          request.headers["stripe-signature"],
+          signature,
           endpointSecret,
         );
       } catch (err) {
-        console.log(
-          "❌ Signature verification failed, using raw JSON for test",
-        );
-        event = JSON.parse(request.body.toString()); // ⚠️ uniquement pour debug
+        console.log(`⚠️  Webhook signature verification failed.`, err.message);
+        return response.sendStatus(400);
       }
     }
 
@@ -63,6 +50,7 @@ router.post(
             },
             { new: true },
           );
+          console.log("session modifiée");
           response.status(201).json({ message: "Session modifiée!" });
         } catch (error) {
           response.status(500).json({ message: error.message });
