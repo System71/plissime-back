@@ -13,7 +13,7 @@ router.post(
     console.log("🔥 WEBHOOK HIT");
     console.log(
       "Webhook received, first 200 chars:",
-      req.body.toString("utf8", 0, 200),
+      request.body.toString("utf8", 0, 200),
     );
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
