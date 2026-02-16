@@ -10,6 +10,7 @@ router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
   async (request, response) => {
+    const endpointSecret = process.env.ENDPOINTSECRET;
     console.log("🔥 WEBHOOK HIT");
     console.log("Length du buffer:", request.body.length);
     console.log("Preview:", request.body.toString("utf8", 0, 200));
