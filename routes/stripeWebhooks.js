@@ -14,7 +14,9 @@ router.post(
     console.log("Length du buffer:", request.body.length);
     console.log("Preview:", request.body.toString("utf8", 0, 200));
     console.log("Headers reçus:", request.headers);
-    console.log("ENDPOINTSECRET utilisé:<", process.env.ENDPOINTSECRET, ">");
+    const endpointSecret = process.env.ENDPOINTSECRET?.trim();
+
+    console.log("ENDPOINTSECRET utilisé:<", endpointSecret, ">");
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
@@ -27,7 +29,7 @@ router.post(
         event = stripe.webhooks.constructEvent(
           request.body,
           signature,
-          process.env.ENDPOINTSECRET,
+          endpointSecret,
         );
       } catch (err) {
         console.log(`⚠️  Webhook signature verification failed.`, err.message);
