@@ -11,10 +11,8 @@ router.post(
   express.raw({ type: "application/json" }),
   async (request, response) => {
     console.log("🔥 WEBHOOK HIT");
-    console.log(
-      "Webhook received, first 200 chars:",
-      request.body.toString("utf8", 0, 200),
-    );
+    console.log("Length du buffer:", request.body.length);
+    console.log("Preview:", request.body.toString("utf8", 0, 200));
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
