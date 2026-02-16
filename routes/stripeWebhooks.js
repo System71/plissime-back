@@ -12,7 +12,7 @@ router.post(
   bodyParser.raw({ type: "application/json" }),
   async (request, response) => {
     console.log("🔥 WEBHOOK HIT");
-    console.log("RAW BODY:", req.body.toString());
+    // console.log("RAW BODY:", req.body.toString());
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
