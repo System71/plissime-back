@@ -5,6 +5,13 @@ const app = express();
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 
+//Websockets
+const http = require("http");
+const server = http.createServer(app);
+const initSocket = require("./configuration/socket");
+const io = initSocket(server);
+app.set("io", io);
+
 //Routes
 const subscriptionRoutes = require("./routes/subscription");
 const userRoutes = require("./routes/user");
@@ -62,9 +69,10 @@ app.get("/informations", isAuthenticated, async (req, res) => {
 });
 
 app.all("*", (req, res) => {
-  res.status(404).send("Page introuvable");
+  res.status(404).json({ error: "Page introuvable" });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log("Server has started");
+//On lance le serveur avec server.listen car on a créé un serveur http pour Websockets
+server.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });

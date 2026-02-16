@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ajoute cette clé dans ton `.env`
-const endpointSecret =
-  "whsec_32d2e7f1cbbe0331f420e91d3ebf0b4a14791f54aaaa02e2ed81584733acec0f";
+// const endpointSecret =
+//   "whsec_32d2e7f1cbbe0331f420e91d3ebf0b4a14791f54aaaa02e2ed81584733acec0f";
 const bodyParser = require("body-parser");
 const Session = require("../models/Session");
 const User = require("../models/User");
@@ -16,14 +16,14 @@ router.post(
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
-    if (endpointSecret) {
+    if (process.env.ENDPOINTSECRET) {
       // Get the signature sent by Stripe
       const signature = request.headers["stripe-signature"];
       try {
         event = stripe.webhooks.constructEvent(
           request.body,
           signature,
-          endpointSecret
+          process.env.ENDPOINTSECRET,
         );
       } catch (err) {
         console.log(`⚠️  Webhook signature verification failed.`, err.message);
@@ -43,7 +43,7 @@ router.post(
             {
               state: "Payée",
             },
-            { new: true }
+            { new: true },
           );
           response.status(201).json({ message: "Session modifiée!" });
         } catch (error) {
@@ -92,7 +92,7 @@ router.post(
 
     // Return a 200 response to acknowledge receipt of the event
     response.send();
-  }
+  },
 );
 
 module.exports = router;
