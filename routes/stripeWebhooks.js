@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ajoute cette clé dans ton `.env`
-// const endpointSecret =
-//   "whsec_32d2e7f1cbbe0331f420e91d3ebf0b4a14791f54aaaa02e2ed81584733acec0f";
 const bodyParser = require("body-parser");
 const Session = require("../models/Session");
 const User = require("../models/User");
@@ -13,6 +11,7 @@ router.post(
   "/webhook",
   bodyParser.raw({ type: "application/json" }),
   async (request, response) => {
+    console.log("RAW BODY:", req.body.toString());
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
