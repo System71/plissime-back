@@ -2,14 +2,13 @@ const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Ajoute cette clé dans ton `.env`
-const bodyParser = require("body-parser");
 const Session = require("../models/Session");
 const User = require("../models/User");
 
 // SURVEILLANCE DES PAIEMENTS RECUS
 router.post(
   "/webhook",
-  bodyParser.raw({ type: "application/json" }),
+  express.raw({ type: "application/json" }),
   async (request, response) => {
     console.log("🔥 WEBHOOK HIT");
     // console.log("RAW BODY:", req.body.toString());
