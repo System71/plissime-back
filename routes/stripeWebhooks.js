@@ -14,13 +14,12 @@ router.post(
     console.log("Length du buffer:", request.body.length);
     console.log("Preview:", request.body.toString("utf8", 0, 200));
     console.log("Headers reçus:", request.headers);
-    const endpointSecret = process.env.ENDPOINTSECRET?.trim();
-
+    console.log("Secret brut:", JSON.stringify(endpointSecret));
     console.log("ENDPOINTSECRET utilisé:<", endpointSecret, ">");
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
     // Otherwise use the basic event deserialized with JSON.parse
-    if (process.env.ENDPOINTSECRET) {
+    if (endpointSecret) {
       // Get the signature sent by Stripe
       const signature = request.headers["stripe-signature"];
       console.log("Signature header:", signature);
