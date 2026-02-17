@@ -8,6 +8,7 @@ const Notification = mongoose.model("Notification", {
   },
   role: { type: String, enum: ["User", "Customer"], required: true },
   type: { type: String },
+  message: { type: String },
   read: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 },
 });
