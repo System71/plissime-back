@@ -22,6 +22,7 @@ const dashboardRoutes = require("./routes/sales");
 const programRoutes = require("./routes/program");
 const movementRoutes = require("./routes/movement");
 const stripeRoutes = require("./routes/stripe");
+const notificationRoute = require("./routes/notification");
 const stripeWebhooks = require("./routes/stripeWebhooks");
 const isAuthenticated = require("./middlewares/isAuthenticated");
 
@@ -44,6 +45,7 @@ app.use(sessionRoutes);
 app.use(dashboardRoutes);
 app.use(programRoutes);
 app.use(movementRoutes);
+app.use(notificationRoute);
 
 app.get("/", (req, res) => {
   res.status(400).send("coucou");
