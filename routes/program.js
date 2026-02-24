@@ -165,15 +165,39 @@ router.put(
 // ========== DISPLAY CUSTOMER PROGRAMS ==========
 router.get("/myprograms", isAuthenticated, async (req, res) => {
   try {
-    const filter = { "customers.informations": req.customer._id };
+    const customerId = req.customer._id;
 
-    let programs = await Program.find(filter)
-      .populate("coach")
-      .populate("customers.informations")
-      .populate("sessions.exercises.movement");
+    const programs = await Program.aggregate([
+      {
+        $match: {
+          "customers.informations": customerId,
+        },
+      },
+      {
+        $project: {
+          title: 1,
+          coach: 1,
+          duration: 1,
+          notes: 1,
+          sessions: 1,
+
+          // 👇 On filtre le tableau customers
+          customers: {
+            $filter: {
+              input: "$customers",
+              as: "customer",
+              cond: {
+                $eq: ["$$customer.informations", customerId],
+              },
+            },
+          },
+        },
+      },
+    ]);
 
     res.status(200).json(programs);
   } catch (error) {
+    console.log("error=", error.message);
     res.status(500).json({ message: error.message });
   }
 });
