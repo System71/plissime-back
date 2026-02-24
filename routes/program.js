@@ -3,6 +3,7 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
 const Program = require("../models/Program");
 const checkSubscription = require("../middlewares/checkSubscription");
+const mongoose = require("mongoose");
 
 //__________________________________ PROGRAMS __________________________________
 
@@ -39,7 +40,7 @@ router.put("/program/modify/:id", checkSubscription, async (req, res) => {
         duration: duration,
         notes: notes,
       },
-      { new: true }
+      { new: true },
     );
     res.status(201).json({ message: "Programme modifiée!" });
   } catch (error) {
@@ -85,6 +86,52 @@ router.get("/programs/:id", checkSubscription, async (req, res) => {
   }
 });
 
+// ========== DISPLAY PROGRAMS AVAILABLE FOR A CUSTOMER ==========
+router.get(
+  "/programs/customer/:customerid",
+  checkSubscription,
+  async (req, res) => {
+    try {
+      const customerId = req.params.customerid;
+
+      const objectId = new mongoose.Types.ObjectId(customerId);
+
+      const programs = await Program.aggregate([
+        {
+          $match: {
+            "customers.informations": objectId,
+          },
+        },
+        {
+          $project: {
+            title: 1,
+            coach: 1,
+            duration: 1,
+            notes: 1,
+            sessions: 1,
+
+            // 👇 On filtre le tableau customers
+            customers: {
+              $filter: {
+                input: "$customers",
+                as: "customer",
+                cond: {
+                  $eq: ["$$customer.informations", objectId],
+                },
+              },
+            },
+          },
+        },
+      ]);
+
+      res.status(200).json(programs);
+    } catch (error) {
+      console.log("error=", error.message);
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
+
 // ========== ADD CUSTOMER TO A PROGRAM ==========
 router.put(
   "/program/:programid/customer/add/:customerid",
@@ -105,14 +152,14 @@ router.put(
       await programToModify.save();
 
       const programModified = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("customers.informations");
 
       res.status(201).json(programModified.customers);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== DISPLAY CUSTOMER PROGRAMS ==========
@@ -138,11 +185,11 @@ router.get(
   async (req, res) => {
     try {
       const programToFind = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("customers.informations");
 
       const customerToFind = programToFind.customers.find((customer) =>
-        customer.informations._id.equals(req.customer._id)
+        customer.informations._id.equals(req.customer._id),
       );
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
@@ -151,7 +198,7 @@ router.get(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 //__________________________________ SESSIONS __________________________________
@@ -168,7 +215,7 @@ router.post("/program/:id/session/add", checkSubscription, async (req, res) => {
           },
         },
       },
-      { new: true }
+      { new: true },
     );
     res.status(201).json(programToModify);
   } catch (error) {
@@ -179,17 +226,17 @@ router.post("/program/:id/session/add", checkSubscription, async (req, res) => {
 // ========== DISPLAY ONE SESSION ==========
 router.get(
   "/program/:programid/session/:sessionid",
-  checkSubscription,
+  isAuthenticated,
   async (req, res) => {
     try {
       const programToFind = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("sessions.exercises.movement");
       res.status(201).json(programToFind.sessions[req.params.sessionid - 1]);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== DELETE SESSION ==========
@@ -210,7 +257,7 @@ router.delete(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== MARK SESSION DONE BY CUSTOMER ==========
@@ -220,13 +267,13 @@ router.put(
   async (req, res) => {
     try {
       const programToModify = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("customers.informations");
       if (!programToModify)
         return res.status(404).json({ message: "Programme non trouvé" });
 
       const customerToFind = programToModify.customers.find((customer) =>
-        customer.informations._id.equals(req.customer._id)
+        customer.informations._id.equals(req.customer._id),
       );
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
@@ -240,7 +287,7 @@ router.put(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== MARK SESSION UNDONE BY CUSTOMER ==========
@@ -250,13 +297,13 @@ router.put(
   async (req, res) => {
     try {
       const programToModify = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("customers.informations");
       if (!programToModify)
         return res.status(404).json({ message: "Programme non trouvé" });
 
       const customerToFind = programToModify.customers.find((customer) =>
-        customer.informations._id.equals(req.customer._id)
+        customer.informations._id.equals(req.customer._id),
       );
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
@@ -270,7 +317,7 @@ router.put(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 //__________________________________ EXERCISES __________________________________
@@ -309,7 +356,7 @@ router.post(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== DISPLAY ONE EXERCISE ==========
@@ -319,7 +366,7 @@ router.get(
   async (req, res) => {
     try {
       const programToFind = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("sessions.exercises.movement");
 
       programToFind.sessions[req.params.sessionid - 1].exercises.map((exo) => {
@@ -330,7 +377,7 @@ router.get(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== MODIFY EXERCISE ==========
@@ -374,7 +421,7 @@ router.put(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 // ========== DELETE EXERCISE ==========
@@ -384,14 +431,14 @@ router.delete(
   async (req, res) => {
     try {
       const programToModify = await Program.findById(
-        req.params.programid
+        req.params.programid,
       ).populate("sessions.exercises.movement");
 
       const sessionIndex = req.params.sessionid - 1;
       const session = programToModify.sessions[sessionIndex];
 
       const exerciseIndex = session.exercises.findIndex(
-        (exo) => String(exo._id) === req.params.exerciseid
+        (exo) => String(exo._id) === req.params.exerciseid,
       );
 
       session.exercises.splice(exerciseIndex, 1);
@@ -402,7 +449,7 @@ router.delete(
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 );
 
 module.exports = router;
