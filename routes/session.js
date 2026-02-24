@@ -12,8 +12,17 @@ const { google } = require("googleapis");
 // ========== CREATE ==========
 router.post("/session/add", isAuthenticated, async (req, res) => {
   try {
-    const { title, start, end, state, content, price, program, customer } =
-      req.body;
+    const {
+      title,
+      start,
+      end,
+      state,
+      content,
+      price,
+      program,
+      programSession,
+      customer,
+    } = req.body;
 
     // =====================
     // LOGIQUE ABONNEMENT
@@ -53,6 +62,7 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       content: content,
       price: price,
       program: program,
+      programSession: programSession,
       coach: req.user.id,
       customer: customer,
       subscription: subscription,
@@ -215,7 +225,11 @@ router.get("/session/:id", isAuthenticated, async (req, res) => {
   try {
     const sessionToFind = await Session.findById(req.params.id)
       .populate("coach")
-      .populate("customer");
+      .populate("customer")
+      .populate("program")
+      .populate("programSession");
+    console.log("sessionToFind", sessionToFind);
+
     res.status(201).json(sessionToFind);
   } catch (error) {
     res.status(500).json({ message: error.message });

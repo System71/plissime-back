@@ -15,9 +15,7 @@ const Session = mongoose.model("Session", {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Program",
   },
-  session: {
-    type: mongoose.Schema.Types.ObjectId,
-  },
+  programSession: Number,
   report: Object,
   coach: {
     type: mongoose.Schema.Types.ObjectId,
