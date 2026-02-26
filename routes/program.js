@@ -145,6 +145,7 @@ router.put(
       programToModify.customers.push({
         informations: req.params.customerid,
         progress: 0,
+        lastSessionFinished: 0,
         start: new Date(),
         lastUpdate: new Date(),
       });
@@ -302,7 +303,7 @@ router.put(
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
 
-      customerToFind.progress = req.params.sessionid;
+      customerToFind.lastSessionFinished = req.params.sessionid;
       customerToFind.lastUpdate = new Date();
 
       await programToModify.save();
@@ -332,7 +333,7 @@ router.put(
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
 
-      customerToFind.progress = req.params.sessionid - 1;
+      customerToFind.lastSessionFinished = req.params.sessionid - 1;
       customerToFind.lastUpdate = new Date();
 
       await programToModify.save();

@@ -6,6 +6,7 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 const { refreshTokenIfNeeded } = require("../middlewares/auth");
 const User = require("../models/User");
 const { google } = require("googleapis");
+const Program = require("../models/Program");
 
 // \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\
 
@@ -68,6 +69,27 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       subscription: subscription,
     });
     await newSession.save();
+
+    // =====================
+    // MAJ PROGRAM
+    // =====================
+
+    const programToModify = await Program.findOneAndUpdate(
+      {
+        _id: program._id,
+        "customers.informations": customer,
+      },
+      {
+        $set: {
+          "customers.$.progress": programSession,
+          "customers.$.currentSession": newSession._id,
+          "customers.$.lastUpdate": new Date(),
+        },
+      },
+      { new: true },
+    );
+
+    console.log("programToModify=", programToModify);
 
     // =====================
     // GOOGLE CALENDAR
