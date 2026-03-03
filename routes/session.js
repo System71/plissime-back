@@ -72,6 +72,27 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
     await newSession.save();
 
     // =====================
+    // MAJ PROGRAM
+    // =====================
+
+    if (program) {
+      const programToModify = await Program.findOneAndUpdate(
+        {
+          _id: program._id,
+          "customers.informations": customer,
+        },
+        {
+          $set: {
+            "customers.$.progress": programSession,
+            "customers.$.currentSession": newSession._id,
+            "customers.$.lastUpdate": new Date(),
+          },
+        },
+        { new: true },
+      );
+    }
+
+    // =====================
     // GOOGLE CALENDAR
     // =====================
 

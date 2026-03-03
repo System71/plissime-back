@@ -2,8 +2,10 @@ const express = require("express");
 const isAuthenticated = require("../middlewares/isAuthenticated");
 const router = express.Router();
 const Program = require("../models/Program");
+const Session = require("../models/Session");
 const checkSubscription = require("../middlewares/checkSubscription");
 const mongoose = require("mongoose");
+const Notification = require("../models/Notification");
 
 //__________________________________ PROGRAMS __________________________________
 
@@ -145,6 +147,7 @@ router.put(
       programToModify.customers.push({
         informations: req.params.customerid,
         progress: 0,
+        lastSessionFinished: 0,
         start: new Date(),
         lastUpdate: new Date(),
       });
@@ -289,7 +292,13 @@ router.put(
   "/program/:programid/progress/:sessionid",
   isAuthenticated,
   async (req, res) => {
+    const { report } = req.body;
+
     try {
+      /////////////////////////////
+      /// Update customer program
+      /////////////////////////////
+
       const programToModify = await Program.findById(
         req.params.programid,
       ).populate("customers.informations");
@@ -302,13 +311,42 @@ router.put(
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
 
-      customerToFind.progress = req.params.sessionid;
+      customerToFind.lastSessionFinished = req.params.sessionid;
       customerToFind.lastUpdate = new Date();
 
       await programToModify.save();
 
+      /////////////////////////////
+      /// Add session report
+      /////////////////////////////
+
+      const sessionId = customerToFind.currentSession;
+
+      const sessionToModify = await Session.findByIdAndUpdate(sessionId);
+
+      sessionToModify.report = report;
+
+      sessionToModify.save();
+
+      const name = customerToFind.informations.name;
+      const firstName = customerToFind.informations.firstName;
+
+      /////////////////////////////
+      /// Create notification
+      /////////////////////////////
+
+      const newNotif = new Notification({
+        user: sessionToModify.coach,
+        role: "User",
+        type: "session",
+        message: `${firstName} ${name} a terminé un entrainement.`,
+      });
+
+      await newNotif.save();
+
       res.status(201).json(programToModify);
     } catch (error) {
+      console.log("error=", error.message);
       res.status(500).json({ message: error.message });
     }
   },
@@ -332,7 +370,7 @@ router.put(
       if (!customerToFind)
         return res.status(404).json({ message: "Client non trouvé" });
 
-      customerToFind.progress = req.params.sessionid - 1;
+      customerToFind.lastSessionFinished = req.params.sessionid - 1;
       customerToFind.lastUpdate = new Date();
 
       await programToModify.save();
