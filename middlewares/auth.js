@@ -1,6 +1,7 @@
 const { google } = require("googleapis");
 const dotenv = require("dotenv");
 dotenv.config();
+const User = require("../models/User");
 
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar",
@@ -14,7 +15,7 @@ const createOAuthClient = () => {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
+    process.env.GOOGLE_REDIRECT_URI,
   );
 };
 
@@ -49,7 +50,7 @@ const refreshTokenIfNeeded = async (user) => {
           "oauth.refreshToken": credentials.refresh_token,
         }),
       },
-      { new: true }
+      { new: true },
     );
 
     oauth2Client.setCredentials(credentials);

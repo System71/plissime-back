@@ -6,7 +6,12 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 // ========== DISPLAY NON READ NOTIFICATIONS ==========
 router.get("/notifications", isAuthenticated, async (req, res) => {
   try {
-    const filter = { user: req.user._id, read: false };
+    let filter;
+    if (req.user) {
+      filter = { user: req.user._id, read: false };
+    } else if (req.customer) {
+      filter = { user: req.customer._id, read: false };
+    }
 
     let notifications = await Notification.find(filter).sort({
       createdAt: 1,

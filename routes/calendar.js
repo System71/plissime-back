@@ -113,8 +113,8 @@ router.get("/events", checkSubscription, async (req, res) => {
         title: event.summary,
         start: event.start.dateTime || event.start.date,
         end: event.end.dateTime || event.end.date,
-        backgroundColor: "#34A853",
-        borderColor: "#34A853",
+        backgroundColor: "#b190ee",
+        borderColor: "#b190ee",
         source: "google",
       }));
 

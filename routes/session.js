@@ -6,6 +6,8 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 const { refreshTokenIfNeeded } = require("../middlewares/auth");
 const User = require("../models/User");
 const { google } = require("googleapis");
+const Notification = require("../models/Notification");
+const { format } = require("date-fns");
 
 // \\ // \\ // \\ USER DISPLAY // \\ // \\ // \\
 
@@ -63,7 +65,7 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
       price: price,
       program: program,
       programSession: programSession,
-      coach: req.user.id,
+      coach: req.user,
       customer: customer,
       subscription: subscription,
     });
@@ -112,6 +114,23 @@ router.post("/session/add", isAuthenticated, async (req, res) => {
         );
       }
     }
+
+    // =====================
+    // CREATE CUSTOMER NOTIFICATION
+    // =====================
+
+    const date = format(newSession.start, "dd/MM/yyyy");
+
+    const newNotif = new Notification({
+      user: newSession.customer,
+      role: "Customer",
+      type: "session",
+      message: `Nouvelle session d'entrainement avec le coach ${coach.firstName} ${coach.name} le ${date}`,
+    });
+
+    console.log("notif=", newNotif);
+
+    await newNotif.save();
 
     res.status(201).json(newSession);
   } catch (error) {
